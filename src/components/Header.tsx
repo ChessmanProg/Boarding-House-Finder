@@ -36,7 +36,7 @@ export default function Header({ onListingCreated }: HeaderProps) {
             ))}
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => setIsListingModalOpen(true)}
@@ -44,16 +44,17 @@ export default function Header({ onListingCreated }: HeaderProps) {
             >
               List Your Room
             </button>
-            <button
-              type="button"
-              aria-label="Account menu"
-              className="flex h-[50px] items-center gap-[9px] rounded-full bg-pressed py-0 pr-3 pl-1.5 shadow-pressed"
+            <a
+              href="?admin=1"
+              aria-label="Owner dashboard"
+              title="Owner dashboard"
+              className="flex h-[50px] items-center gap-[9px] rounded-full bg-pressed py-0 pr-3 pl-1.5 shadow-pressed transition hover:shadow-raised"
             >
               <span className="flex size-9 items-center justify-center rounded-full bg-avatar">
                 <UserRound size={19} strokeWidth={1.8} className="text-avatar-icon" />
               </span>
               <ChevronDown size={15} strokeWidth={1.8} className="text-ink" />
-            </button>
+            </a>
           </div>
         </div>
       </header>
