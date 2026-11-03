@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, Roboto, Helvetica, sans-serif;
+
+  --color-page: #f3f4f8;
+  --color-surface: #fcfcfd;
+  --color-card: #fffdfc;
+  --color-ink: #293c42;
+  --color-muted: #68777f;
+  --color-line: #e3e7ec;
+  --color-brand: #258773;
+  --color-brand-dark: #196a5a;
+  --color-brand-tint: #e4f2eb;
+  --color-brand-border: #c7dfd3;
+  --color-pressed: #eef0f5;
+  --color-avatar: #edebf7;
+  --color-avatar-icon: #7e7c9d;
+  --color-star: #c78d49;
+
+  --shadow-raised: -2px -3px 6px 0 rgba(133, 146, 160, 0.06) inset,
+    2px 2px 3px 0 rgba(255, 255, 255, 0.9) inset,
+    -5px -5px 14px 0 rgba(255, 255, 255, 0.88),
+    6px 8px 22px 0 rgba(124, 138, 159, 0.11);
+  --shadow-pressed: -2px -2px 4px 0 #fff inset,
+    2px 3px 6px 0 rgba(141, 155, 163, 0.1) inset;
+  --shadow-brand: -2px -3px 5px 0 rgba(13, 76, 67, 0.16) inset,
+    2px 2px 3px 0 rgba(255, 255, 255, 0.27) inset,
+    3px 5px 10px 0 rgba(33, 95, 71, 0.15);
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
