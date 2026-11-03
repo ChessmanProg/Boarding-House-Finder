@@ -7,11 +7,10 @@ import OwnerDashboard from "./components/OwnerDashboard";
 
 export default function App() {
   const isAdminRoute = new URLSearchParams(window.location.search).get("admin") === "1";
+  return isAdminRoute ? <OwnerDashboard /> : <HomePage />;
+}
 
-  if (isAdminRoute) {
-    return <OwnerDashboard />;
-  }
-
+function HomePage() {
   const [listingRefreshKey, setListingRefreshKey] = useState(0);
   const [submissionNotice, setSubmissionNotice] = useState("");
 
