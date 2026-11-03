@@ -76,7 +76,7 @@ export default function Listings() {
   }, []);
 
   return (
-    <section className="flex flex-col gap-7 px-4 pb-12 sm:px-8 lg:px-16">
+    <section id="listings" className="flex flex-col gap-7 px-4 pb-12 sm:px-8 lg:px-16">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-col gap-[9px]">
           <h2 className="text-[25px] font-semibold tracking-[-0.7px] text-ink">
