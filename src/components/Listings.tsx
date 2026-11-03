@@ -60,6 +60,7 @@ export default function Listings() {
     const { data, error: queryError } = await supabase
       .from("listings")
       .select("id, title, location, price, type, amenities, image, description, landlord_name, contact_phone, wifi, rules")
+      .eq("status", "approved")
       .order("created_at", { ascending: false });
 
     if (queryError) {
@@ -76,7 +77,7 @@ export default function Listings() {
   }, []);
 
   return (
-    <section className="flex flex-col gap-7 px-4 pb-12 sm:px-8 lg:px-16">
+    <section id="listings" className="flex flex-col gap-7 px-4 pb-12 sm:px-8 lg:px-16">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-col gap-[9px]">
           <h2 className="text-[25px] font-semibold tracking-[-0.7px] text-ink">
@@ -115,7 +116,7 @@ export default function Listings() {
           <House size={28} className="text-brand" />
           <h3 className="font-semibold text-ink">No listings yet</h3>
           <p className="max-w-md text-sm text-muted">
-            When a boarding house is submitted and saved, it will appear here for students to explore.
+            Approved boarding houses will appear here for students to explore. New submissions are checked before they become public.
           </p>
         </div>
       ) : (
