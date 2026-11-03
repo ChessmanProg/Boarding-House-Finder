@@ -296,7 +296,7 @@ export default function ListingSubmissionModal({ onClose, onCreated }: Props) {
             </button>
           </div>
           <p className="text-center text-xs text-muted">
-            Required fields are marked with an asterisk. Submissions are currently published immediately.
+            Required fields are marked with an asterisk. Every submission stays pending until an administrator approves it.
           </p>
         </form>
       </section>
