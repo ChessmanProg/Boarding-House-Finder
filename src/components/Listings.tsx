@@ -60,6 +60,7 @@ export default function Listings() {
     const { data, error: queryError } = await supabase
       .from("listings")
       .select("id, title, location, price, type, amenities, image, description, landlord_name, contact_phone, wifi, rules")
+      .eq("status", "approved")
       .order("created_at", { ascending: false });
 
     if (queryError) {
@@ -115,7 +116,7 @@ export default function Listings() {
           <House size={28} className="text-brand" />
           <h3 className="font-semibold text-ink">No listings yet</h3>
           <p className="max-w-md text-sm text-muted">
-            When a boarding house is submitted and saved, it will appear here for students to explore.
+            Approved boarding houses will appear here for students to explore. New submissions are checked before they become public.
           </p>
         </div>
       ) : (
