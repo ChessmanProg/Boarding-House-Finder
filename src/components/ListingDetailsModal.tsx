@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X, MapPin, Wifi, UserRound, Phone, CheckCircle2, House, MessageCircle, Share2, Heart, Star, ShieldCheck, BedSingle, CalendarDays, Clock3, ArrowRight, Info, GraduationCap, ShoppingBasket, Bus, ChevronRight } from "lucide-react";
 
 export type ListingDetails = {
-  title: string; location: string; price: number | string; type: string; image: string | null;
+  title: string; location: string; price: number | string; type: string; image: string | null; images?: string[] | null;
   description: string | null; landlord_name: string | null; contact_phone: string | null;
   amenities: string[] | null; wifi: string | null; rules: string[] | null;
 };
@@ -22,6 +22,7 @@ export default function ListingDetailsModal({ listing, onClose }: Props) {
   const [saved, setSaved] = useState(() => readFavorites().includes(id));
   const amenities = listing.amenities ?? [];
   const rules = listing.rules ?? [];
+  const galleryImages = (listing.images?.length ? listing.images : listing.image ? [listing.image] : []).slice(0, 5);
   function toggleSave() { const all = readFavorites(); const next = saved ? all.filter(x => x !== id) : [...all, id]; localStorage.setItem(FAVORITES_KEY, JSON.stringify(next)); setSaved(!saved); window.dispatchEvent(new CustomEvent("boarding-house-favorites-changed")); }
   async function share() { if (navigator.share) { try { await navigator.share({ title: listing.title, text: `${listing.title} · ${listing.location}`, url: location.href }); } catch { /* dismissed */ } } else { try { await navigator.clipboard.writeText(location.href); } catch { /* unavailable */ } } }
 
@@ -35,8 +36,8 @@ export default function ListingDetailsModal({ listing, onClose }: Props) {
       <div className="mb-4 flex items-center gap-2 text-[11px] text-[#68777f]"><button onClick={onClose}>All rooms</button><ChevronRight size={12}/><span>{listing.location}</span><ChevronRight size={12}/><b className="text-[#293c42]">{listing.title}</b></div>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight sm:text-[32px]">{listing.title}</h1><span className="inline-flex items-center gap-1 rounded-full bg-[#e4f2eb] px-3 py-1.5 text-[10px] font-semibold text-[#196a5a]"><ShieldCheck size={13}/>Listed on Boarding House Finder</span></div><div className="mt-2 flex flex-wrap gap-3 text-xs text-[#68777f]"><span className="inline-flex items-center gap-1"><MapPin size={13}/>{listing.location}</span><span className="inline-flex items-center gap-1"><BedSingle size={13}/>{listing.type}</span></div></div></div>
       <div className="mb-7 grid gap-2 overflow-hidden rounded-[24px] sm:h-[300px] sm:grid-cols-[1.35fr_1fr] lg:h-[360px]">
-        <div className="relative min-h-[230px] overflow-hidden bg-[#e2e8e4]">{listing.image ? <img src={listing.image} alt={`${listing.title} room`} className="size-full object-cover"/> : <div className="flex size-full items-center justify-center text-[#258773]"><House size={54}/></div>}<span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-2 text-[10px] font-semibold"><Star size={12} className="mr-1 inline text-[#c78d49]"/>Room photos</span></div>
-        <div className="grid min-h-[190px] grid-cols-2 grid-rows-2 gap-2">{[0,1,2,3].map(i=><div key={i} className="overflow-hidden bg-gradient-to-br from-[#e7e9e6] to-[#d9e5df]">{listing.image && <img src={listing.image} alt="" className="size-full object-cover"/>}</div>)}</div>
+        <div className="relative min-h-[230px] overflow-hidden bg-[#e2e8e4]">{galleryImages[0] ? <img src={galleryImages[0]} alt={`${listing.title} room`} className="size-full object-cover"/> : <div className="flex size-full items-center justify-center text-[#258773]"><House size={54}/></div>}<span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-2 text-[10px] font-semibold"><Star size={12} className="mr-1 inline text-[#c78d49]"/>Room photos</span></div>
+        <div className="grid min-h-[190px] grid-cols-2 grid-rows-2 gap-2">{[1,2,3,4].map((i)=><div key={i} className="relative overflow-hidden bg-gradient-to-br from-[#e7e9e6] to-[#d9e5df]">{galleryImages[i] ? <img src={galleryImages[i]} alt={`${listing.title} photo ${i+1}`} className="size-full object-cover"/> : <div className="flex size-full items-center justify-center text-[#258773]/50"><House size={24}/></div>}</div>)}</div>
       </div>
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_330px] xl:grid-cols-[minmax(0,1fr)_360px]">
         <main className="min-w-0 space-y-7">
