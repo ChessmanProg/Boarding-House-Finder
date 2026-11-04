@@ -36,11 +36,20 @@ create policy "Approved participants send messages" on public.messages for inser
   where c.id=conversation_id and (auth.uid()=c.renter_id or auth.uid()=c.landlord_id)
  )
 );
+-- This trigger-only function updates the conversation timestamp after a message.
+-- Keep its privileged scope narrow and prevent direct invocation by API roles.
 create or replace function public.update_conversation_message_time() returns trigger
-language plpgsql security definer set search_path=public as $$
+language plpgsql
+security definer
+set search_path = ''
+as $
 begin
- update public.conversations set last_message_at=now() where id=new.conversation_id;
+ update public.conversations
+ set last_message_at = now()
+ where id = new.conversation_id;
  return new;
-end; $$;
+end;
+$;
+revoke all on function public.update_conversation_message_time() from public, anon, authenticated;
 create trigger message_updates_conversation after insert on public.messages
 for each row execute function public.update_conversation_message_time();
