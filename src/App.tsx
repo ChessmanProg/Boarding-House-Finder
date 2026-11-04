@@ -4,6 +4,7 @@ import Hero from "./components/Hero";
 import Listings from "./components/Listings";
 import Footer from "./components/Footer";
 import OwnerDashboard from "./components/OwnerDashboard";
+import type { SearchCriteria } from "./components/SearchBar";
 
 export default function App() {
   const isAdminRoute = new URLSearchParams(window.location.search).get("admin") === "1";
@@ -13,6 +14,11 @@ export default function App() {
 function HomePage() {
   const [listingRefreshKey, setListingRefreshKey] = useState(0);
   const [submissionNotice, setSubmissionNotice] = useState("");
+  const [searchCriteria, setSearchCriteria] = useState<SearchCriteria>({
+    location: "",
+    maxBudget: "",
+    roomType: "any",
+  });
 
   function handleListingCreated() {
     setListingRefreshKey((key) => key + 1);
@@ -40,8 +46,8 @@ function HomePage() {
         </div>
       )}
       <main>
-        <Hero />
-        <Listings key={listingRefreshKey} />
+        <Hero onSearch={setSearchCriteria} />
+        <Listings key={listingRefreshKey} searchCriteria={searchCriteria} />
       </main>
       <Footer />
     </div>
