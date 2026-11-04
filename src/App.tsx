@@ -4,15 +4,15 @@ import Hero from "./components/Hero";
 import Listings from "./components/Listings";
 import Footer from "./components/Footer";
 import OwnerDashboard from "./components/OwnerDashboard";
-import MyListings from "./components/MyListings";
+import MyListings from "./components/MyListings";\nimport Messaging from "./components/Messaging";
 import type { SearchCriteria } from "./components/SearchBar";
 
 export default function App() {
   const params = new URLSearchParams(window.location.search);
   const isAdminRoute = params.get("admin") === "1";
-  const isMyListingsRoute = params.get("my-listings") === "1";
+  const isMyListingsRoute = params.get("my-listings") === "1";\n  const isMessagesRoute = params.get("messages") === "1";
   if (isAdminRoute) return <OwnerDashboard />;
-  if (isMyListingsRoute) return <MyListings />;
+  if (isMyListingsRoute) return <MyListings />;\n  if (isMessagesRoute) return <Messaging />;
   return <HomePage />;
 }
 
