@@ -1,51 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ChevronsUpDown, SlidersHorizontal, House, RefreshCw } from "lucide-react";
+import { ArrowRight, ChevronsUpDown, SlidersHorizontal, House, RefreshCw, Heart } from "lucide-react";
 import { listings as sampleListings, type Listing } from "../data";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import ListingCard from "./ListingCard";
 import ListingDetailsModal, { type ListingDetails } from "./ListingDetailsModal";
 import type { SearchCriteria } from "./SearchBar";
 
-const actionButton =
-  "flex h-[46px] items-center justify-center gap-2 rounded-3xl bg-surface px-4 text-sm font-semibold text-brand-dark shadow-raised";
-
+const actionButton = "flex h-[46px] items-center justify-center gap-2 rounded-3xl bg-surface px-4 text-sm font-semibold text-brand-dark shadow-raised";
+const FAVORITES_KEY = "boarding-house-finder:favorites";
 type SupabaseListing = {
-  id: number;
-  title: string;
-  location: string;
-  price: number | string;
-  type: string;
-  amenities: string[] | null;
-  image: string | null;
-  description: string | null;
-  landlord_name: string | null;
-  contact_phone: string | null;
-  wifi: string | null;
-  rules: string[] | null;
+  id: number; title: string; location: string; price: number | string; type: string;
+  amenities: string[] | null; image: string | null; description: string | null;
+  landlord_name: string | null; contact_phone: string | null; wifi: string | null; rules: string[] | null;
 };
-
-type Props = {
-  searchCriteria: SearchCriteria;
-};
-
+type Props = { searchCriteria: SearchCriteria };
 const fallbackImage = sampleListings[0]?.image ?? "";
-
 function toCardListing(row: SupabaseListing): Listing {
   const numericPrice = Number(row.price);
   return {
-    name: row.title,
-    location: row.location,
-    distance: "Student-friendly location",
+    name: row.title, location: row.location, distance: "Student-friendly location",
     roomType: row.type,
-    price: Number.isFinite(numericPrice)
-      ? `₱${numericPrice.toLocaleString("en-PH")}`
-      : `₱${row.price}`,
-    rating: "",
-    reviews: 0,
-    badge: { label: "Listing", icon: House },
-    image: row.image || fallbackImage,
+    price: Number.isFinite(numericPrice) ? `₱${numericPrice.toLocaleString("en-PH")}` : `₱${row.price}`,
+    rating: "", reviews: 0, badge: { label: "Listing", icon: House }, image: row.image || fallbackImage,
   };
 }
+function readFavorites(): string[] {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(FAVORITES_KEY) || "[]");
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  } catch { return []; }
+}
+function favoriteKey(room: SupabaseListing) { return `${room.title}::${room.location}`; }
 
 export default function Listings({ searchCriteria }: Props) {
   const [rooms, setRooms] = useState<SupabaseListing[]>([]);
@@ -54,177 +39,83 @@ export default function Listings({ searchCriteria }: Props) {
   const [selectedListing, setSelectedListing] = useState<SupabaseListing | null>(null);
   const [sortOrder, setSortOrder] = useState("recommended");
   const [wifiOnly, setWifiOnly] = useState(false);
-
-  async function loadListings() {
-    setLoading(true);
-    setError("");
-
-    if (!isSupabaseConfigured || !supabase) {
-      setRooms([]);
-      setError("Supabase is not configured yet. Add your project URL and publishable key to the environment variables.");
-      setLoading(false);
-      return;
-    }
-
-    const { data, error: queryError } = await supabase
-      .from("listings")
-      .select("id, title, location, price, type, amenities, image, description, landlord_name, contact_phone, wifi, rules")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false });
-
-    if (queryError) {
-      setRooms([]);
-      setError(queryError.message);
-    } else {
-      setRooms((data ?? []) as SupabaseListing[]);
-    }
-    setLoading(false);
-  }
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>(() => readFavorites());
 
   useEffect(() => {
-    void loadListings();
+    const sync = () => setFavoriteIds(readFavorites());
+    window.addEventListener("boarding-house-favorites-changed", sync);
+    window.addEventListener("storage", sync);
+    return () => { window.removeEventListener("boarding-house-favorites-changed", sync); window.removeEventListener("storage", sync); };
   }, []);
+
+  async function loadListings() {
+    setLoading(true); setError("");
+    if (!isSupabaseConfigured || !supabase) {
+      setRooms([]); setError("Supabase is not configured yet. Add your project URL and publishable key to the environment variables."); setLoading(false); return;
+    }
+    const { data, error: queryError } = await supabase.from("listings")
+      .select("id, title, location, price, type, amenities, image, description, landlord_name, contact_phone, wifi, rules")
+      .eq("status", "approved").order("created_at", { ascending: false });
+    if (queryError) { setRooms([]); setError(queryError.message); }
+    else setRooms((data ?? []) as SupabaseListing[]);
+    setLoading(false);
+  }
+  useEffect(() => { void loadListings(); }, []);
 
   const filteredRooms = useMemo(() => {
     const locationTerm = searchCriteria.location.toLocaleLowerCase();
     const maxBudget = searchCriteria.maxBudget ? Number(searchCriteria.maxBudget) : null;
-
     const result = rooms.filter((room) => {
-      const matchesLocation =
-        !locationTerm ||
-        room.title.toLocaleLowerCase().includes(locationTerm) ||
-        room.location.toLocaleLowerCase().includes(locationTerm);
+      const matchesLocation = !locationTerm || room.title.toLocaleLowerCase().includes(locationTerm) || room.location.toLocaleLowerCase().includes(locationTerm);
       const price = Number(room.price);
-      const matchesBudget =
-        maxBudget === null || (Number.isFinite(price) && price <= maxBudget);
+      const matchesBudget = maxBudget === null || (Number.isFinite(price) && price <= maxBudget);
       const roomType = room.type.toLocaleLowerCase();
-      const matchesRoomType =
-        searchCriteria.roomType === "any" ||
+      const matchesRoomType = searchCriteria.roomType === "any" ||
         (searchCriteria.roomType === "single" && roomType.includes("single")) ||
         (searchCriteria.roomType === "shared" && roomType.includes("shared"));
       const amenityText = (room.amenities ?? []).join(" ").toLocaleLowerCase();
-      const matchesWifi =
-        !wifiOnly ||
-        Boolean(room.wifi?.trim()) ||
-        amenityText.includes("wifi") ||
-        amenityText.includes("wi-fi");
-
-      return matchesLocation && matchesBudget && matchesRoomType && matchesWifi;
+      const matchesWifi = !wifiOnly || Boolean(room.wifi?.trim()) || amenityText.includes("wifi") || amenityText.includes("wi-fi");
+      const matchesFavorite = !favoritesOnly || favoriteIds.includes(favoriteKey(room));
+      return matchesLocation && matchesBudget && matchesRoomType && matchesWifi && matchesFavorite;
     });
-
-    if (sortOrder === "price-low") {
-      result.sort((a, b) => Number(a.price) - Number(b.price));
-    } else if (sortOrder === "price-high") {
-      result.sort((a, b) => Number(b.price) - Number(a.price));
-    }
+    if (sortOrder === "price-low") result.sort((a, b) => Number(a.price) - Number(b.price));
+    else if (sortOrder === "price-high") result.sort((a, b) => Number(b.price) - Number(a.price));
     return result;
-  }, [rooms, searchCriteria, sortOrder, wifiOnly]);
+  }, [rooms, searchCriteria, sortOrder, wifiOnly, favoritesOnly, favoriteIds]);
 
-  const hasSearch =
-    Boolean(searchCriteria.location || searchCriteria.maxBudget || searchCriteria.roomType !== "any" || wifiOnly);
-
+  const hasSearch = Boolean(searchCriteria.location || searchCriteria.maxBudget || searchCriteria.roomType !== "any" || wifiOnly || favoritesOnly);
   return (
     <section id="listings" className="flex flex-col gap-7 px-4 pb-12 sm:px-8 lg:px-16">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-col gap-[9px]">
-          <h2 className="text-[25px] font-semibold tracking-[-0.7px] text-ink">
-            Rooms you’ll feel at home in
-          </h2>
-          <p className="text-[13px] text-muted">
-            {loading ? "Finding available student spaces…" : `${filteredRooms.length} of ${rooms.length} approved student spaces`}
-          </p>
+          <h2 className="text-[25px] font-semibold tracking-[-0.7px] text-ink">Rooms you’ll feel at home in</h2>
+          <p className="text-[13px] text-muted">{loading ? "Finding available student spaces…" : `${filteredRooms.length} of ${rooms.length} approved student spaces`}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <label className={actionButton}>
             <ChevronsUpDown size={18} strokeWidth={1.8} className="text-brand" />
             <span className="sr-only">Sort listings</span>
-            <select
-              value={sortOrder}
-              onChange={(event) => setSortOrder(event.target.value)}
-              className="max-w-[145px] bg-transparent outline-none"
-              aria-label="Sort listings"
-            >
-              <option value="recommended">Recommended</option>
-              <option value="price-low">Price: low to high</option>
-              <option value="price-high">Price: high to low</option>
+            <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} className="max-w-[145px] bg-transparent outline-none" aria-label="Sort listings">
+              <option value="recommended">Recommended</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option>
             </select>
           </label>
-          <button
-            type="button"
-            className={wifiOnly ? "flex h-[46px] items-center justify-center gap-2 rounded-3xl bg-brand-tint px-4 text-sm font-semibold text-brand-dark shadow-pressed" : actionButton}
-            aria-pressed={wifiOnly}
-            onClick={() => setWifiOnly((value) => !value)}
-          >
-            <SlidersHorizontal size={18} strokeWidth={1.8} className="text-brand" />
-            Wi-Fi {wifiOnly ? "included" : "filter"}
+          <button type="button" className={wifiOnly ? "flex h-[46px] items-center justify-center gap-2 rounded-3xl bg-brand-tint px-4 text-sm font-semibold text-brand-dark shadow-pressed" : actionButton} aria-pressed={wifiOnly} onClick={() => setWifiOnly((value) => !value)}>
+            <SlidersHorizontal size={18} strokeWidth={1.8} className="text-brand" /> Wi-Fi {wifiOnly ? "included" : "filter"}
           </button>
-          {hasSearch && (
-            <button
-              type="button"
-              className="rounded-3xl px-3 text-sm font-semibold text-brand-dark underline"
-              onClick={() => {
-                setWifiOnly(false);
-                setSortOrder("recommended");
-                window.dispatchEvent(new CustomEvent("boarding-house-clear-search"));
-              }}
-            >
-              Clear filters
-            </button>
-          )}
+          <button type="button" className={favoritesOnly ? "flex h-[46px] items-center justify-center gap-2 rounded-3xl bg-brand-tint px-4 text-sm font-semibold text-brand-dark shadow-pressed" : actionButton} aria-pressed={favoritesOnly} onClick={() => setFavoritesOnly((value) => !value)}>
+            <Heart size={17} className={favoritesOnly ? "fill-rose-500 text-rose-500" : "text-brand"} /> Saved ({favoriteIds.length})
+          </button>
+          {hasSearch && <button type="button" className="rounded-3xl px-3 text-sm font-semibold text-brand-dark underline" onClick={() => { setWifiOnly(false); setFavoritesOnly(false); setSortOrder("recommended"); window.dispatchEvent(new CustomEvent("boarding-house-clear-search")); }}>Clear filters</button>}
         </div>
       </div>
-
-      {loading ? (
-        <div className="rounded-[28px] bg-card p-10 text-center text-sm text-muted shadow-raised">
-          Loading listings from Supabase…
-        </div>
-      ) : error ? (
-        <div role="alert" className="flex flex-col items-center gap-3 rounded-[28px] bg-card p-8 text-center shadow-raised">
-          <p className="max-w-xl text-sm text-muted">{error}</p>
-          <button type="button" onClick={() => void loadListings()} className={actionButton}>
-            <RefreshCw size={16} className="text-brand" />
-            Try again
-          </button>
-        </div>
-      ) : rooms.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-[28px] bg-card p-10 text-center shadow-raised">
-          <House size={28} className="text-brand" />
-          <h3 className="font-semibold text-ink">No listings yet</h3>
-          <p className="max-w-md text-sm text-muted">
-            Approved boarding houses will appear here for students to explore. New submissions are checked before they become public.
-          </p>
-        </div>
-      ) : filteredRooms.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-[28px] bg-card p-10 text-center shadow-raised">
-          <House size={28} className="text-brand" />
-          <h3 className="font-semibold text-ink">No matching rooms found</h3>
-          <p className="max-w-md text-sm text-muted">
-            Try a different location, a higher budget, or another room type.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-x-6 gap-y-[26px] sm:grid-cols-2 lg:grid-cols-4">
-          {filteredRooms.map((room) => (
-            <ListingCard
-              key={room.id}
-              listing={toCardListing(room)}
-              onViewDetails={() => setSelectedListing(room)}
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="flex flex-col items-center gap-[17px] pt-[13px] pb-1.5 text-center">
-        <p className="text-sm font-medium text-ink">Your next chapter starts with the right room.</p>
-        <p className="text-[11px] text-muted">Showing {filteredRooms.length} listing{filteredRooms.length === 1 ? "" : "s"}</p>
-      </div>
-
-      {selectedListing && (
-        <ListingDetailsModal
-          listing={selectedListing as ListingDetails}
-          onClose={() => setSelectedListing(null)}
-        />
-      )}
+      {loading ? <div className="rounded-[28px] bg-card p-10 text-center text-sm text-muted shadow-raised">Loading listings from Supabase…</div>
+      : error ? <div role="alert" className="flex flex-col items-center gap-3 rounded-[28px] bg-card p-8 text-center shadow-raised"><p className="max-w-xl text-sm text-muted">{error}</p><button type="button" onClick={() => void loadListings()} className={actionButton}><RefreshCw size={16} className="text-brand" />Try again</button></div>
+      : rooms.length === 0 ? <div className="flex flex-col items-center gap-3 rounded-[28px] bg-card p-10 text-center shadow-raised"><House size={28} className="text-brand" /><h3 className="font-semibold text-ink">No listings yet</h3><p className="max-w-md text-sm text-muted">Approved boarding houses will appear here for students to explore. New submissions are checked before they become public.</p></div>
+      : filteredRooms.length === 0 ? <div className="flex flex-col items-center gap-3 rounded-[28px] bg-card p-10 text-center shadow-raised"><House size={28} className="text-brand" /><h3 className="font-semibold text-ink">{favoritesOnly ? "No saved rooms here yet" : "No matching rooms found"}</h3><p className="max-w-md text-sm text-muted">{favoritesOnly ? "Tap the heart on a room to save it for later." : "Try a different location, a higher budget, or another room type."}</p></div>
+      : <div className="grid grid-cols-1 gap-x-6 gap-y-[26px] sm:grid-cols-2 lg:grid-cols-4">{filteredRooms.map((room) => <ListingCard key={room.id} listing={toCardListing(room)} onViewDetails={() => setSelectedListing(room)} />)}</div>}
+      <div className="flex flex-col items-center gap-[17px] pt-[13px] pb-1.5 text-center"><p className="text-sm font-medium text-ink">Your next chapter starts with the right room.</p><p className="text-[11px] text-muted">Showing {filteredRooms.length} listing{filteredRooms.length === 1 ? "" : "s"}</p></div>
+      {selectedListing && <ListingDetailsModal listing={selectedListing as ListingDetails} onClose={() => setSelectedListing(null)} />}
     </section>
   );
 }
