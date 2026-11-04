@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import UserAccessReview from "./UserAccessReview";
 
 const OWNER_EMAIL = "tneilandre20@gmail.com";
 
@@ -54,8 +55,8 @@ function formatDate(value: string) {
 export default function OwnerDashboard() {
   const [session, setSession] = useState<Session | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
-  const [sendingLink, setSendingLink] = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const [ownerPassword, setOwnerPassword] = useState("");
   const [listings, setListings] = useState<AdminListing[]>([]);
   const [activeFilter, setActiveFilter] = useState<"all" | ListingStatus>("pending");
   const [loadingListings, setLoadingListings] = useState(false);
@@ -130,31 +131,18 @@ export default function OwnerDashboard() {
     void loadListings();
   }, [session]);
 
-  async function sendOwnerLink(event: FormEvent<HTMLFormElement>) {
+  async function signInOwner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase) return;
 
-    setSendingLink(true);
+    setSigningIn(true);
     setError("");
     setMessage("");
 
-    const redirectUrl = `${window.location.origin}${window.location.pathname}?admin=1`;
-    const { error: linkError } = await supabase.auth.signInWithOtp({
-      email: OWNER_EMAIL,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: redirectUrl,
-      },
-    });
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: OWNER_EMAIL, password: ownerPassword });
 
-    if (linkError) {
-      setError(linkError.message);
-    } else {
-      setLinkSent(true);
-      setMessage(`A secure sign-in link has been sent to ${OWNER_EMAIL}. Open it in this same browser to access the owner dashboard.`);
-    }
-
-    setSendingLink(false);
+    if (signInError) setError(signInError.message);
+    setSigningIn(false);
   }
 
   async function changeStatus(listing: AdminListing, status: ListingStatus) {
@@ -254,7 +242,7 @@ export default function OwnerDashboard() {
             Sign in to manage listings
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">
-            A one-time secure sign-in link will be sent to the registered owner email. No password is needed.
+            Sign in with the owner account password to review listings and approve user access.
           </p>
 
           <div className="mt-6 rounded-2xl bg-page p-4 shadow-pressed">
@@ -273,15 +261,28 @@ export default function OwnerDashboard() {
             </p>
           )}
 
-          <form onSubmit={sendOwnerLink} className="mt-6">
-            <button
-              type="submit"
-              disabled={sendingLink || linkSent}
-              className={`${buttonBase} w-full bg-brand py-3 text-white shadow-brand hover:brightness-105`}
-            >
-              {sendingLink ? "Sending secure link…" : linkSent ? "Sign-in link sent" : "Email me a sign-in link"}
+          <form onSubmit={signInOwner} className="mt-6 space-y-3">
+            <label className="block text-sm font-semibold text-ink">Owner password
+              <input
+                type="password"
+                autoComplete="current-password"
+                required
+                value={ownerPassword}
+                onChange={(event) => setOwnerPassword(event.target.value)}
+                className="mt-1.5 w-full rounded-2xl bg-page px-4 py-3 text-sm text-ink shadow-pressed outline-none focus:ring-2 focus:ring-brand/40"
+              />
+            </label>
+            <button type="submit" disabled={signingIn} className={`${buttonBase} w-full bg-brand py-3 text-white shadow-brand hover:brightness-105`}>
+              {signingIn ? "Signing in…" : "Log in"}
             </button>
           </form>
+          <button
+            type="button"
+            onClick={() => void supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}${window.location.pathname}?admin=1` } })}
+            className={`${buttonBase} mt-3 w-full bg-surface text-ink shadow-raised`}
+          >
+            Continue with Google
+          </button>
 
           <p className="mt-4 text-center text-xs leading-5 text-muted">
             Only {OWNER_EMAIL} is authorized to approve, reject, or remove listings.
@@ -323,6 +324,8 @@ export default function OwnerDashboard() {
             </button>
           </div>
         </div>
+
+        <UserAccessReview />
 
         {message && <p role="status" className="rounded-2xl bg-brand-tint p-4 text-sm text-brand-dark">{message}</p>}
         {error && <p role="alert" className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
