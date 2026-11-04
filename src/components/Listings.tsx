@@ -3,6 +3,7 @@ import { ArrowRight, ChevronsUpDown, SlidersHorizontal, House, RefreshCw } from 
 import { listings as sampleListings, type Listing } from "../data";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import ListingCard from "./ListingCard";
+import ListingDetailsModal, { type ListingDetails } from "./ListingDetailsModal";
 
 const actionButton =
   "flex h-[50px] items-center justify-center gap-2.5 rounded-3xl bg-surface px-[22px] text-sm font-semibold text-brand-dark shadow-raised";
@@ -42,9 +43,10 @@ function toCardListing(row: SupabaseListing): Listing {
 }
 
 export default function Listings() {
-  const [rooms, setRooms] = useState<Listing[]>([]);
+  const [rooms, setRooms] = useState<SupabaseListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedListing, setSelectedListing] = useState<SupabaseListing | null>(null);
 
   async function loadListings() {
     setLoading(true);
@@ -67,7 +69,7 @@ export default function Listings() {
       setRooms([]);
       setError(queryError.message);
     } else {
-      setRooms(((data ?? []) as SupabaseListing[]).map(toCardListing));
+      setRooms((data ?? []) as SupabaseListing[]);
     }
     setLoading(false);
   }
@@ -121,8 +123,12 @@ export default function Listings() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-x-6 gap-y-[26px] sm:grid-cols-2 lg:grid-cols-4">
-          {rooms.map((listing, index) => (
-            <ListingCard key={`${listing.name}-${index}`} listing={listing} />
+          {rooms.map((room) => (
+            <ListingCard
+              key={room.id}
+              listing={toCardListing(room)}
+              onViewDetails={() => setSelectedListing(room)}
+            />
           ))}
         </div>
       )}
@@ -135,6 +141,13 @@ export default function Listings() {
         </button>
         <p className="text-[11px] text-muted">Showing {rooms.length} listing{rooms.length === 1 ? "" : "s"}</p>
       </div>
+
+      {selectedListing && (
+        <ListingDetailsModal
+          listing={selectedListing as ListingDetails}
+          onClose={() => setSelectedListing(null)}
+        />
+      )}
     </section>
   );
 }
