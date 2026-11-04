@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import UserAccessReview from "./UserAccessReview";
 
 const OWNER_EMAIL = "tneilandre20@gmail.com";
 
@@ -323,6 +324,8 @@ export default function OwnerDashboard() {
             </button>
           </div>
         </div>
+
+        <UserAccessReview />
 
         {message && <p role="status" className="rounded-2xl bg-brand-tint p-4 text-sm text-brand-dark">{message}</p>}
         {error && <p role="alert" className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
