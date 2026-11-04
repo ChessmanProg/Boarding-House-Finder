@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Listings from "./components/Listings";
@@ -19,6 +19,13 @@ function HomePage() {
     maxBudget: "",
     roomType: "any",
   });
+
+  useEffect(() => {
+    const clearSearch = () =>
+      setSearchCriteria({ location: "", maxBudget: "", roomType: "any" });
+    window.addEventListener("boarding-house-clear-search", clearSearch);
+    return () => window.removeEventListener("boarding-house-clear-search", clearSearch);
+  }, []);
 
   function handleListingCreated() {
     setListingRefreshKey((key) => key + 1);
