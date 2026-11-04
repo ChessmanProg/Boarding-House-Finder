@@ -88,3 +88,22 @@
 }
 .theme-toggle:hover { transform: translateY(-2px); }
 .theme-toggle span:first-child { font-size: 1.1rem; }
+
+
+/* Keep status and validation colors readable when the global theme is dark. */
+:root[data-theme="dark"] .bg-red-50 {
+  background-color: #3b252b;
+}
+:root[data-theme="dark"] .text-red-700 {
+  color: #ffb4bd;
+}
+:root[data-theme="dark"] .bg-amber-50 {
+  background-color: #3b3220;
+}
+:root[data-theme="dark"] .text-amber-800,
+:root[data-theme="dark"] .text-amber-700 {
+  color: #f4d28b;
+}
+:root[data-theme="dark"] .text-amber-700 {
+  color: #f4d28b;
+}
