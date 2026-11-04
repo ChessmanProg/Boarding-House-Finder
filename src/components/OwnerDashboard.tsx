@@ -133,7 +133,10 @@ export default function OwnerDashboard() {
 
   async function signInOwner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase) return;
+    if (!supabase) {
+      setError("Supabase is not configured.");
+      return;
+    }
 
     setSigningIn(true);
     setError("");
@@ -143,6 +146,22 @@ export default function OwnerDashboard() {
 
     if (signInError) setError(signInError.message);
     setSigningIn(false);
+  }
+
+  async function signInWithGoogle() {
+    if (!supabase) {
+      setError("Supabase is not configured.");
+      return;
+    }
+
+    const { error: googleError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}${window.location.pathname}?admin=1`,
+      },
+    });
+
+    if (googleError) setError(googleError.message);
   }
 
   async function changeStatus(listing: AdminListing, status: ListingStatus) {
@@ -278,7 +297,7 @@ export default function OwnerDashboard() {
           </form>
           <button
             type="button"
-            onClick={() => void supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}${window.location.pathname}?admin=1` } })}
+            onClick={() => void signInWithGoogle()}
             className={`${buttonBase} mt-3 w-full bg-surface text-ink shadow-raised`}
           >
             Continue with Google
