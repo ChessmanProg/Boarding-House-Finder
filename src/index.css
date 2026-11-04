@@ -50,6 +50,14 @@
   --shadow-brand: none;
 }
 
+/* In dark mode, suppress all shadow utilities and component-specific shadows.
+   This prevents the bright neumorphic white glow from leaking through. */
+:root[data-theme="dark"] *,
+:root[data-theme="dark"] *::before,
+:root[data-theme="dark"] *::after {
+  box-shadow: none !important;
+}
+
 @layer base {
   body {
     margin: 0;
