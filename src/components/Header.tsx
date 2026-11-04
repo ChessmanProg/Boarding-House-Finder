@@ -89,13 +89,48 @@ export default function Header({ onListingCreated }: HeaderProps) {
     await supabase.auth.signOut(); setCurrentUser(null); setProfileOpen(false); setAccessStatus(null); setAccessNotice("");
   }
 
-  function startListing() {
+  async function startListing() {
     setAccessNotice("");
-    if (accessStatus === "approved") {
-      setIsListingModalOpen(true);
-    } else {
+    if (!supabase) {
       setIsAuthModalOpen(true);
+      return;
     }
+
+    // Check the active session and approval directly instead of trusting
+    // potentially stale component state after sign-in or OAuth redirect.
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      setCurrentUser(null);
+      setAccessStatus(null);
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    setCurrentUser(user);
+    const { data, error } = await supabase
+      .from("user_access")
+      .select("status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      setAccessNotice("We couldn't verify your approval status. Please try again.");
+      return;
+    }
+
+    const status = (data?.status ?? "pending") as AccessStatus;
+    setAccessStatus(status);
+    if (status === "approved") {
+      setIsListingModalOpen(true);
+      return;
+    }
+
+    setAccessNotice(
+      status === "rejected"
+        ? "Your account request was not approved. Please contact the owner."
+        : "Your account is awaiting owner approval.",
+    );
+    setIsAuthModalOpen(false);
   }
 
   return (
