@@ -81,7 +81,7 @@ export default function ListingCard({ listing, onViewDetails }: Props) {
             <span className="block text-[19px] font-bold leading-tight tracking-[-0.6px] text-ink">{price}</span>
             per month
           </p>
-          <button type="button" onClick={onViewDetails} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-brand-dark">
+          <button type="button" onClick={onViewDetails} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand px-3.5 py-2.5 text-xs font-semibold text-page transition hover:bg-brand-dark">
             View room <ArrowUpRight size={14} />
           </button>
         </div>
