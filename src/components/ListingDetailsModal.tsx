@@ -1,7 +1,9 @@
 import { useState } from "react";
+import Messaging from "./Messaging";
 import { X, MapPin, Wifi, UserRound, Phone, CheckCircle2, House, MessageCircle, Share2, Heart, Star, ShieldCheck, BedSingle, CalendarDays, Clock3, ArrowRight, Info, GraduationCap, ShoppingBasket, Bus, ChevronRight } from "lucide-react";
 
 export type ListingDetails = {
+  id: number; owner_id?: string | null;
   title: string; location: string; price: number | string; type: string; image: string | null; images?: string[] | null;
   description: string | null; landlord_name: string | null; contact_phone: string | null;
   amenities: string[] | null; wifi: string | null; rules: string[] | null;
@@ -20,6 +22,7 @@ export default function ListingDetailsModal({ listing, onClose }: Props) {
   const message = encodeURIComponent(`Hi ${listing.landlord_name || "there"}! I saw “${listing.title}” on Boarding House Finder in ${listing.location}. Is it still available? Thank you!`);
   const id = favId(listing);
   const [saved, setSaved] = useState(() => readFavorites().includes(id));
+  const [messagingOpen, setMessagingOpen] = useState(false);
   const amenities = listing.amenities ?? [];
   const rules = listing.rules ?? [];
   const galleryImages = (listing.images?.length ? listing.images : listing.image ? [listing.image] : []).slice(0, 5);
@@ -51,10 +54,12 @@ export default function ListingDetailsModal({ listing, onClose }: Props) {
           <section className="border-t border-[#e3e7ec] pt-5"><h2 className="text-base font-semibold">Questions about this listing?</h2><p className="mt-2 text-sm text-[#68777f]">Contact the host to confirm availability, move-in details, and anything else you need to know.</p><button onClick={onClose} className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#196a5a] shadow-raised">Back to rooms <ArrowRight size={15}/></button></section>
         </main>
         <aside className="lg:sticky lg:top-[88px]"><div className="rounded-[24px] bg-[#fcfcfd] p-5 shadow-[0_8px_24px_rgba(124,138,159,.12)]"><div className="flex items-baseline justify-between gap-3"><p className="text-xl font-bold">{price(listing.price)} <span className="text-xs font-medium text-[#68777f]">/ month</span></p><span className="rounded-full bg-[#e4f2eb] px-2.5 py-1 text-[10px] font-semibold text-[#196a5a]">Monthly rent</span></div><p className="mt-2 text-xs text-[#68777f]">{listing.type} · {listing.location}</p><div className="my-5 space-y-3 rounded-2xl bg-[#f3f4f8] p-4"><div className="flex items-center gap-3"><CalendarDays size={16} className="text-[#258773]"/><div><p className="text-xs font-semibold">Move-in date</p><p className="mt-1 text-[11px] text-[#68777f]">Ask host for availability</p></div></div><div className="h-px bg-[#e3e7ec]"/><div className="flex items-center gap-3"><Clock3 size={16} className="text-[#258773]"/><div><p className="text-xs font-semibold">Rental duration</p><p className="mt-1 text-[11px] text-[#68777f]">Confirm terms with host</p></div></div></div>
+          {listing.owner_id && <button type="button" onClick={() => setMessagingOpen(true)} className="mb-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#258773] px-4 py-3.5 text-sm font-semibold text-white"><MessageCircle size={16}/>Message Landlord</button>}
           {phone ? <div className="space-y-2"><a href={`tel:${phoneHref}`} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#258773] px-4 py-3.5 text-sm font-semibold text-white"><Phone size={16}/>Call host</a>{number.length>=10 && <a href={`https://wa.me/${number}?text=${message}`} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-full border border-[#c7dfd3] bg-white px-4 py-3 text-sm font-semibold text-[#196a5a]"><MessageCircle size={16}/>Message host</a>}</div> : <p className="rounded-xl bg-[#f3f4f8] p-3 text-xs text-[#68777f]">Contact details have not been added to this listing yet.</p>}
           <p className="mt-4 flex items-start gap-2 text-[10px] leading-5 text-[#68777f]"><Info size={13} className="mt-0.5 shrink-0 text-[#258773]"/>Confirm rent, deposit, and availability directly with the host before making any payment.</p><button onClick={share} className="mt-4 w-full text-xs font-semibold text-[#68777f]">Share listing</button>
         </div></aside>
       </div>
+      {messagingOpen && listing.owner_id && <Messaging listingId={listing.id} landlordId={listing.owner_id} listingTitle={listing.title} onClose={() => setMessagingOpen(false)} />}
       <footer className="mt-10 border-t border-[#e3e7ec] pt-5 text-center text-[10px] text-[#68777f]">© Boarding House Finder · Find a place to call home</footer>
     </div>
   </div>;

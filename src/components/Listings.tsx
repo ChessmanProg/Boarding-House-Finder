@@ -9,7 +9,7 @@ import type { SearchCriteria } from "./SearchBar";
 const actionButton = "flex h-[46px] items-center justify-center gap-2 rounded-3xl bg-surface px-4 text-sm font-semibold text-brand-dark shadow-raised";
 const FAVORITES_KEY = "boarding-house-finder:favorites";
 type SupabaseListing = {
-  id:number; title:string; location:string; price:number|string; type:string;
+  id:number; owner_id:string|null; title:string; location:string; price:number|string; type:string;
   amenities:string[]|null; image:string|null; images:string[]|null; description:string|null;
   landlord_name:string|null; contact_phone:string|null; wifi:string|null; rules:string[]|null;
 };
@@ -37,7 +37,7 @@ export default function Listings({searchCriteria}:Props) {
   async function loadListings(){
     setLoading(true);setError("");
     if(!isSupabaseConfigured||!supabase){setRooms([]);setError("Supabase is not configured yet. Add your project URL and publishable key to the environment variables.");setLoading(false);return;}
-    const {data,error:queryError}=await supabase.from("listings").select("id,title,location,price,type,amenities,image,images,description,landlord_name,contact_phone,wifi,rules").eq("status","approved").order("created_at",{ascending:false});
+    const {data,error:queryError}=await supabase.from("listings").select("id,owner_id,title,location,price,type,amenities,image,images,description,landlord_name,contact_phone,wifi,rules").eq("status","approved").order("created_at",{ascending:false});
     if(queryError){setRooms([]);setError(queryError.message);}else setRooms((data??[]) as SupabaseListing[]);
     setLoading(false);
   }
