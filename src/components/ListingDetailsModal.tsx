@@ -1,4 +1,4 @@
-import { X, MapPin, Wifi, UserRound, Phone, CheckCircle2, House } from "lucide-react";
+import { X, MapPin, Wifi, UserRound, Phone, CheckCircle2, House, MessageCircle } from "lucide-react";
 
 export type ListingDetails = {
   title: string;
@@ -21,9 +21,20 @@ function formatPrice(value: number | string) {
   return Number.isFinite(amount) ? `₱${amount.toLocaleString("en-PH")}` : `₱${value}`;
 }
 
+function whatsappNumber(value: string) {
+  let digits = value.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = `63${digits.slice(1)}`;
+  else if (digits.startsWith("9") && digits.length === 10) digits = `63${digits}`;
+  return digits;
+}
+
 export default function ListingDetailsModal({ listing, onClose }: Props) {
   const phone = listing.contact_phone?.trim();
   const phoneHref = phone?.replace(/[^+\d]/g, "");
+  const waNumber = phone ? whatsappNumber(phone) : "";
+  const waMessage = encodeURIComponent(
+    `Hi ${listing.landlord_name || "there"}! I saw your listing “${listing.title}” on Boarding House Finder in ${listing.location}. Is it still available? I'd like to know more. Thank you!`,
+  );
 
   return (
     <div
@@ -56,7 +67,7 @@ export default function ListingDetailsModal({ listing, onClose }: Props) {
 
           {listing.rules?.length ? <section><h3 className="mb-3 font-semibold text-ink">House rules</h3><ul className="space-y-2">{listing.rules.map((rule) => <li key={rule} className="flex items-start gap-2 text-sm text-muted"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-brand" />{rule}</li>)}</ul></section> : null}
 
-          {(listing.landlord_name || phone) && <section className="rounded-2xl bg-page p-4"><h3 className="mb-3 font-semibold text-ink">Contact information</h3>{listing.landlord_name && <p className="mb-2 flex items-center gap-2 text-sm text-muted"><UserRound size={16} className="text-brand" />{listing.landlord_name}</p>}{phone && <a href={`tel:${phoneHref}`} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-brand"><Phone size={16} />Call {phone}</a>}</section>}
+          {(listing.landlord_name || phone) && <section className="rounded-2xl bg-page p-4"><h3 className="mb-3 font-semibold text-ink">Contact information</h3>{listing.landlord_name && <p className="mb-2 flex items-center gap-2 text-sm text-muted"><UserRound size={16} className="text-brand" />{listing.landlord_name}</p>}{phone && <div className="flex flex-wrap gap-2"><a href={`tel:${phoneHref}`} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-brand"><Phone size={16} />Call {phone}</a>{waNumber.length >= 10 && <a href={`https://wa.me/${waNumber}?text=${waMessage}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-brand/20 bg-surface px-4 py-3 text-sm font-semibold text-brand-dark hover:bg-brand-tint"><MessageCircle size={16} />Message on WhatsApp</a>}</div>}</section>}
         </div>
       </section>
     </div>
