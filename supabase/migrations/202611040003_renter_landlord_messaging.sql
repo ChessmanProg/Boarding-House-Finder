@@ -1,0 +1,2 @@
+-- Private conversations for renters and listing owners
+create table if not exists public.conversations (id uuid primary key default gen_random_uuid(), listing_id bigint not null references public.listings(id) on delete cascade, renter_id uuid not null references auth.users(id) on delete cascade, landlord_id uuid not null references auth.users(id) on delete cascade, created_at timestamptz not null default now(), last_message_at timestamptz not null default now(), unique(listing_id,renter_id), check(renter_id <> landlord_id));
