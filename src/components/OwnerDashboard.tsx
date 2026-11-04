@@ -55,8 +55,8 @@ function formatDate(value: string) {
 export default function OwnerDashboard() {
   const [session, setSession] = useState<Session | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
-  const [sendingLink, setSendingLink] = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
+  const [ownerPassword, setOwnerPassword] = useState("");
   const [listings, setListings] = useState<AdminListing[]>([]);
   const [activeFilter, setActiveFilter] = useState<"all" | ListingStatus>("pending");
   const [loadingListings, setLoadingListings] = useState(false);
@@ -131,31 +131,18 @@ export default function OwnerDashboard() {
     void loadListings();
   }, [session]);
 
-  async function sendOwnerLink(event: FormEvent<HTMLFormElement>) {
+  async function signInOwner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase) return;
 
-    setSendingLink(true);
+    setSigningIn(true);
     setError("");
     setMessage("");
 
-    const redirectUrl = `${window.location.origin}${window.location.pathname}?admin=1`;
-    const { error: linkError } = await supabase.auth.signInWithOtp({
-      email: OWNER_EMAIL,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: redirectUrl,
-      },
-    });
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: OWNER_EMAIL, password: ownerPassword });
 
-    if (linkError) {
-      setError(linkError.message);
-    } else {
-      setLinkSent(true);
-      setMessage(`A secure sign-in link has been sent to ${OWNER_EMAIL}. Open it in this same browser to access the owner dashboard.`);
-    }
-
-    setSendingLink(false);
+    if (signInError) setError(signInError.message);
+    setSigningIn(false);
   }
 
   async function changeStatus(listing: AdminListing, status: ListingStatus) {
@@ -255,7 +242,7 @@ export default function OwnerDashboard() {
             Sign in to manage listings
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">
-            A one-time secure sign-in link will be sent to the registered owner email. No password is needed.
+            Sign in with the owner account password to review listings and approve user access.
           </p>
 
           <div className="mt-6 rounded-2xl bg-page p-4 shadow-pressed">
