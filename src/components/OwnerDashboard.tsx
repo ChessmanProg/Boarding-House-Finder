@@ -6,6 +6,7 @@ import {
   Clock3,
   ExternalLink,
   LogOut,
+  KeyRound,
   RefreshCw,
   ShieldCheck,
   Trash2,
@@ -57,6 +58,9 @@ export default function OwnerDashboard() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
   const [ownerPassword, setOwnerPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const [listings, setListings] = useState<AdminListing[]>([]);
   const [activeFilter, setActiveFilter] = useState<"all" | ListingStatus>("pending");
   const [loadingListings, setLoadingListings] = useState(false);
@@ -211,6 +215,33 @@ export default function OwnerDashboard() {
     }
 
     setWorkingId(null);
+  }
+
+  async function changeOwnerPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!supabase) return;
+    setError("");
+    setMessage("");
+
+    if (newPassword.length < 8) {
+      setError("Your new password must be at least 8 characters long.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setError("The new passwords do not match.");
+      return;
+    }
+
+    setChangingPassword(true);
+    const { error: passwordError } = await supabase.auth.updateUser({ password: newPassword });
+    if (passwordError) {
+      setError(passwordError.message);
+    } else {
+      setMessage("Your password has been updated. Use it the next time you log in with your email.");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    }
+    setChangingPassword(false);
   }
 
   async function signOut() {
