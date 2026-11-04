@@ -4,11 +4,16 @@ import Hero from "./components/Hero";
 import Listings from "./components/Listings";
 import Footer from "./components/Footer";
 import OwnerDashboard from "./components/OwnerDashboard";
+import MyListings from "./components/MyListings";
 import type { SearchCriteria } from "./components/SearchBar";
 
 export default function App() {
-  const isAdminRoute = new URLSearchParams(window.location.search).get("admin") === "1";
-  return isAdminRoute ? <OwnerDashboard /> : <HomePage />;
+  const params = new URLSearchParams(window.location.search);
+  const isAdminRoute = params.get("admin") === "1";
+  const isMyListingsRoute = params.get("my-listings") === "1";
+  if (isAdminRoute) return <OwnerDashboard />;
+  if (isMyListingsRoute) return <MyListings />;
+  return <HomePage />;
 }
 
 function HomePage() {

@@ -42,7 +42,7 @@ export default function ListingSubmissionModal({onClose,onCreated}:Props) {
       }
       const imageUrls=uploaded.length?uploaded:(form.image.trim()?[form.image.trim()]:[]);
       const {error:insertError}=await supabase.from("listings").insert({
-        title:form.title.trim(),location:form.location.trim(),price:amount,type:form.type,
+        owner_id:user.id,title:form.title.trim(),location:form.location.trim(),price:amount,type:form.type,
         description:form.description.trim()||null,landlord_name:form.landlord_name.trim()||null,
         contact_phone:form.contact_phone.trim()||null,image:imageUrls[0]||null,images:imageUrls,
         amenities:toArray(form.amenities),wifi:form.wifi.trim()||null,rules:toArray(form.rules),
