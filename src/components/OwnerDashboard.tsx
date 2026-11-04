@@ -286,13 +286,13 @@ export default function OwnerDashboard() {
             <ShieldCheck size={27} />
           </span>
           <p className="mt-6 text-xs font-bold uppercase tracking-[0.14em] text-brand">
-            Owner access
+            Personal Account
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">
             Sign in to manage listings
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Sign in with the owner account password to review listings and approve user access.
+            Sign in to review listings and approve user access.
           </p>
 
           {message && (
@@ -307,7 +307,7 @@ export default function OwnerDashboard() {
           )}
 
           <form onSubmit={signInOwner} className="mt-6 space-y-3">
-            <label className="block text-sm font-semibold text-ink">Owner password
+            <label className="block text-sm font-semibold text-ink">Password
               <input
                 type="password"
                 autoComplete="current-password"
@@ -362,7 +362,6 @@ Only the authorized owner account can approve, reject, or remove listings.
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Owner workspace</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Listing management</h1>
             <p className="mt-2 text-sm text-muted">Review submissions, publish rooms, or remove outdated listings.</p>
-            <p className="mt-1 text-xs text-muted">Signed in as {session.user.email}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => void loadListings()} disabled={loadingListings} className={`${buttonBase} bg-surface text-brand-dark shadow-raised`}>
