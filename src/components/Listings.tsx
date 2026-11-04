@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, ChevronsUpDown, SlidersHorizontal, House, RefreshCw } from "lucide-react";
 import { listings as sampleListings, type Listing } from "../data";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import ListingCard from "./ListingCard";
 import ListingDetailsModal, { type ListingDetails } from "./ListingDetailsModal";
+import type { SearchCriteria } from "./SearchBar";
 
 const actionButton =
-  "flex h-[50px] items-center justify-center gap-2.5 rounded-3xl bg-surface px-[22px] text-sm font-semibold text-brand-dark shadow-raised";
+  "flex h-[46px] items-center justify-center gap-2 rounded-3xl bg-surface px-4 text-sm font-semibold text-brand-dark shadow-raised";
 
 type SupabaseListing = {
   id: number;
@@ -21,6 +22,10 @@ type SupabaseListing = {
   contact_phone: string | null;
   wifi: string | null;
   rules: string[] | null;
+};
+
+type Props = {
+  searchCriteria: SearchCriteria;
 };
 
 const fallbackImage = sampleListings[0]?.image ?? "";
@@ -42,11 +47,13 @@ function toCardListing(row: SupabaseListing): Listing {
   };
 }
 
-export default function Listings() {
+export default function Listings({ searchCriteria }: Props) {
   const [rooms, setRooms] = useState<SupabaseListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedListing, setSelectedListing] = useState<SupabaseListing | null>(null);
+  const [sortOrder, setSortOrder] = useState("recommended");
+  const [wifiOnly, setWifiOnly] = useState(false);
 
   async function loadListings() {
     setLoading(true);
@@ -78,6 +85,44 @@ export default function Listings() {
     void loadListings();
   }, []);
 
+  const filteredRooms = useMemo(() => {
+    const locationTerm = searchCriteria.location.toLocaleLowerCase();
+    const maxBudget = searchCriteria.maxBudget ? Number(searchCriteria.maxBudget) : null;
+
+    const result = rooms.filter((room) => {
+      const matchesLocation =
+        !locationTerm ||
+        room.title.toLocaleLowerCase().includes(locationTerm) ||
+        room.location.toLocaleLowerCase().includes(locationTerm);
+      const price = Number(room.price);
+      const matchesBudget =
+        maxBudget === null || (Number.isFinite(price) && price <= maxBudget);
+      const roomType = room.type.toLocaleLowerCase();
+      const matchesRoomType =
+        searchCriteria.roomType === "any" ||
+        (searchCriteria.roomType === "single" && roomType.includes("single")) ||
+        (searchCriteria.roomType === "shared" && roomType.includes("shared"));
+      const amenityText = (room.amenities ?? []).join(" ").toLocaleLowerCase();
+      const matchesWifi =
+        !wifiOnly ||
+        Boolean(room.wifi?.trim()) ||
+        amenityText.includes("wifi") ||
+        amenityText.includes("wi-fi");
+
+      return matchesLocation && matchesBudget && matchesRoomType && matchesWifi;
+    });
+
+    if (sortOrder === "price-low") {
+      result.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (sortOrder === "price-high") {
+      result.sort((a, b) => Number(b.price) - Number(a.price));
+    }
+    return result;
+  }, [rooms, searchCriteria, sortOrder, wifiOnly]);
+
+  const hasSearch =
+    Boolean(searchCriteria.location || searchCriteria.maxBudget || searchCriteria.roomType !== "any" || wifiOnly);
+
   return (
     <section id="listings" className="flex flex-col gap-7 px-4 pb-12 sm:px-8 lg:px-16">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -86,18 +131,46 @@ export default function Listings() {
             Rooms you’ll feel at home in
           </h2>
           <p className="text-[13px] text-muted">
-            {loading ? "Finding available student spaces…" : `${rooms.length} student spaces from the community`}
+            {loading ? "Finding available student spaces…" : `${filteredRooms.length} of ${rooms.length} approved student spaces`}
           </p>
         </div>
-        <div className="flex gap-3">
-          <button type="button" className={actionButton} disabled>
+        <div className="flex flex-wrap gap-3">
+          <label className={actionButton}>
             <ChevronsUpDown size={18} strokeWidth={1.8} className="text-brand" />
-            Recommended
-          </button>
-          <button type="button" className={actionButton} disabled>
+            <span className="sr-only">Sort listings</span>
+            <select
+              value={sortOrder}
+              onChange={(event) => setSortOrder(event.target.value)}
+              className="max-w-[145px] bg-transparent outline-none"
+              aria-label="Sort listings"
+            >
+              <option value="recommended">Recommended</option>
+              <option value="price-low">Price: low to high</option>
+              <option value="price-high">Price: high to low</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            className={wifiOnly ? "flex h-[46px] items-center justify-center gap-2 rounded-3xl bg-brand-tint px-4 text-sm font-semibold text-brand-dark shadow-pressed" : actionButton}
+            aria-pressed={wifiOnly}
+            onClick={() => setWifiOnly((value) => !value)}
+          >
             <SlidersHorizontal size={18} strokeWidth={1.8} className="text-brand" />
-            Filters
+            Wi-Fi {wifiOnly ? "included" : "filter"}
           </button>
+          {hasSearch && (
+            <button
+              type="button"
+              className="rounded-3xl px-3 text-sm font-semibold text-brand-dark underline"
+              onClick={() => {
+                setWifiOnly(false);
+                setSortOrder("recommended");
+                window.dispatchEvent(new CustomEvent("boarding-house-clear-search"));
+              }}
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -121,9 +194,17 @@ export default function Listings() {
             Approved boarding houses will appear here for students to explore. New submissions are checked before they become public.
           </p>
         </div>
+      ) : filteredRooms.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-[28px] bg-card p-10 text-center shadow-raised">
+          <House size={28} className="text-brand" />
+          <h3 className="font-semibold text-ink">No matching rooms found</h3>
+          <p className="max-w-md text-sm text-muted">
+            Try a different location, a higher budget, or another room type.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-x-6 gap-y-[26px] sm:grid-cols-2 lg:grid-cols-4">
-          {rooms.map((room) => (
+          {filteredRooms.map((room) => (
             <ListingCard
               key={room.id}
               listing={toCardListing(room)}
@@ -135,11 +216,7 @@ export default function Listings() {
 
       <div className="flex flex-col items-center gap-[17px] pt-[13px] pb-1.5 text-center">
         <p className="text-sm font-medium text-ink">Your next chapter starts with the right room.</p>
-        <button type="button" className={actionButton} disabled>
-          <ArrowRight size={18} strokeWidth={1.8} className="text-brand" />
-          Explore more rooms
-        </button>
-        <p className="text-[11px] text-muted">Showing {rooms.length} listing{rooms.length === 1 ? "" : "s"}</p>
+        <p className="text-[11px] text-muted">Showing {filteredRooms.length} listing{filteredRooms.length === 1 ? "" : "s"}</p>
       </div>
 
       {selectedListing && (

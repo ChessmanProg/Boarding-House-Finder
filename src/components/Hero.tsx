@@ -1,8 +1,12 @@
 import { Sparkles } from "lucide-react";
-import SearchBar from "./SearchBar";
+import SearchBar, { type SearchCriteria } from "./SearchBar";
 import CategoryChips from "./CategoryChips";
 
-export default function Hero() {
+type Props = {
+  onSearch: (criteria: SearchCriteria) => void;
+};
+
+export default function Hero({ onSearch }: Props) {
   return (
     <section className="flex flex-col items-center gap-8 px-4 pt-[46px] pb-10 sm:px-8 lg:px-16">
       <div className="flex flex-col items-center gap-4 text-center">
@@ -18,7 +22,7 @@ export default function Hero() {
         </p>
       </div>
 
-      <SearchBar />
+      <SearchBar onSearch={onSearch} />
       <CategoryChips />
     </section>
   );
