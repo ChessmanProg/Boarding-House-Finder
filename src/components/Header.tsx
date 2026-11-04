@@ -150,10 +150,10 @@ export default function Header({ onListingCreated }: HeaderProps) {
 
   return (
     <>
-      <header className="px-4 pt-7 sm:px-8 lg:px-16">
-        <div className="flex h-[84px] items-center justify-between rounded-full bg-surface px-4 shadow-raised sm:px-6">
+      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6 lg:px-10">
+        <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between rounded-full border border-line/70 bg-surface/95 px-4 shadow-[0_12px_35px_rgba(28,65,58,0.08)] backdrop-blur-xl sm:px-6">
           <a href="/" className="flex items-center gap-3">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-[18px] bg-brand-tint shadow-raised">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-[18px] bg-brand-tint">
               <House size={27} strokeWidth={1.8} className="text-brand" />
             </span>
             <span className="hidden text-lg font-bold tracking-[-0.6px] text-ink sm:block">Boarding House Finder</span>
