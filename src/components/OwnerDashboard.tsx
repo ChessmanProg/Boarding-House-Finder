@@ -295,11 +295,6 @@ export default function OwnerDashboard() {
             Sign in with the owner account password to review listings and approve user access.
           </p>
 
-          <div className="mt-6 rounded-2xl bg-page p-4 shadow-pressed">
-            <p className="text-xs font-semibold text-muted">OWNER ACCOUNT</p>
-            <p className="mt-1 font-semibold text-ink">{OWNER_EMAIL}</p>
-          </div>
-
           {message && (
             <p role="status" className="mt-4 rounded-2xl bg-brand-tint p-4 text-sm text-brand-dark">
               {message}
@@ -341,7 +336,7 @@ export default function OwnerDashboard() {
           </button>
 
           <p className="mt-4 text-center text-xs leading-5 text-muted">
-            Only {OWNER_EMAIL} is authorized to approve, reject, or remove listings.
+Only the authorized owner account can approve, reject, or remove listings.
           </p>
         </section>
       </AdminShell>
