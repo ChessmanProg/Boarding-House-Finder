@@ -45,10 +45,7 @@
   --color-avatar: #34424f;
   --color-avatar-icon: #c0ccd5;
   --color-star: #e0b56f;
-  --shadow-raised: -2px -3px 6px 0 rgba(0, 0, 0, 0.15) inset,
-    2px 2px 3px 0 rgba(255, 255, 255, 0.025) inset,
-    -5px -5px 14px 0 rgba(0, 0, 0, 0.22),
-    6px 8px 22px 0 rgba(0, 0, 0, 0.28);
+  --shadow-raised: 0 2px 8px 0 rgba(0, 0, 0, 0.18);
   --shadow-pressed: -2px -2px 4px 0 #111820 inset,
     2px 3px 6px 0 rgba(0, 0, 0, 0.2) inset;
   --shadow-brand: -2px -3px 5px 0 rgba(0, 0, 0, 0.2) inset,
