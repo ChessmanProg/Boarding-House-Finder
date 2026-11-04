@@ -127,8 +127,9 @@ export default function OwnerDashboard() {
 
     const signedInEmail = (session.user.email ?? "").toLowerCase();
     if (signedInEmail !== OWNER_EMAIL) {
-      setError("This account is not authorized to manage Boarding House Finder listings.");
-      void supabase?.auth.signOut();
+      // Non-owner accounts use the public homepage. Their approval status
+      // controls listing-submission access, not access to public browsing.
+      window.location.replace(window.location.pathname);
       return;
     }
 
