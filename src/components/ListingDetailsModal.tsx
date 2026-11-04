@@ -1,75 +1,60 @@
-import { X, MapPin, Wifi, UserRound, Phone, CheckCircle2, House, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import { X, MapPin, Wifi, UserRound, Phone, CheckCircle2, House, MessageCircle, Share2, Heart, Star, ShieldCheck, BedSingle, CalendarDays, Clock3, ArrowRight, Info, GraduationCap, ShoppingBasket, Bus, ChevronRight } from "lucide-react";
 
 export type ListingDetails = {
-  title: string;
-  location: string;
-  price: number | string;
-  type: string;
-  image: string | null;
-  description: string | null;
-  landlord_name: string | null;
-  contact_phone: string | null;
-  amenities: string[] | null;
-  wifi: string | null;
-  rules: string[] | null;
+  title: string; location: string; price: number | string; type: string; image: string | null;
+  description: string | null; landlord_name: string | null; contact_phone: string | null;
+  amenities: string[] | null; wifi: string | null; rules: string[] | null;
 };
-
 type Props = { listing: ListingDetails; onClose: () => void };
-
-function formatPrice(value: number | string) {
-  const amount = Number(value);
-  return Number.isFinite(amount) ? `₱${amount.toLocaleString("en-PH")}` : `₱${value}`;
-}
-
-function whatsappNumber(value: string) {
-  let digits = value.replace(/\D/g, "");
-  if (digits.startsWith("0")) digits = `63${digits.slice(1)}`;
-  else if (digits.startsWith("9") && digits.length === 10) digits = `63${digits}`;
-  return digits;
-}
+const FAVORITES_KEY = "boarding-house-finder:favorites";
+const price = (v: number | string) => { const n = Number(v); return Number.isFinite(n) ? `₱${n.toLocaleString("en-PH")}` : `₱${v}`; };
+const favId = (l: ListingDetails) => `${l.title}::${l.location}`;
+function readFavorites(): string[] { try { const v = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"); return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []; } catch { return []; } }
+function waNumber(value: string) { let d = value.replace(/\D/g, ""); if (d.startsWith("0")) d = `63${d.slice(1)}`; else if (d.startsWith("9") && d.length === 10) d = `63${d}`; return d; }
 
 export default function ListingDetailsModal({ listing, onClose }: Props) {
-  const phone = listing.contact_phone?.trim();
-  const phoneHref = phone?.replace(/[^+\d]/g, "");
-  const waNumber = phone ? whatsappNumber(phone) : "";
-  const waMessage = encodeURIComponent(
-    `Hi ${listing.landlord_name || "there"}! I saw your listing “${listing.title}” on Boarding House Finder in ${listing.location}. Is it still available? I'd like to know more. Thank you!`,
-  );
+  const phone = listing.contact_phone?.trim() || "";
+  const phoneHref = phone.replace(/[^+\d]/g, "");
+  const number = waNumber(phone);
+  const message = encodeURIComponent(`Hi ${listing.landlord_name || "there"}! I saw “${listing.title}” on Boarding House Finder in ${listing.location}. Is it still available? Thank you!`);
+  const id = favId(listing);
+  const [saved, setSaved] = useState(() => readFavorites().includes(id));
+  const amenities = listing.amenities ?? [];
+  const rules = listing.rules ?? [];
+  function toggleSave() { const all = readFavorites(); const next = saved ? all.filter(x => x !== id) : [...all, id]; localStorage.setItem(FAVORITES_KEY, JSON.stringify(next)); setSaved(!saved); window.dispatchEvent(new CustomEvent("boarding-house-favorites-changed")); }
+  async function share() { if (navigator.share) { try { await navigator.share({ title: listing.title, text: `${listing.title} · ${listing.location}`, url: location.href }); } catch { /* dismissed */ } } else { try { await navigator.clipboard.writeText(location.href); } catch { /* unavailable */ } } }
 
-  return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/45 p-3 backdrop-blur-sm sm:p-6"
-      onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
-    >
-      <section role="dialog" aria-modal="true" aria-labelledby="listing-details-title" className="relative max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[30px] bg-surface shadow-raised">
-        <button type="button" onClick={onClose} aria-label="Close listing details" className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-surface/95 text-ink shadow-raised">
-          <X size={19} />
-        </button>
-        {listing.image ? (
-          <img src={listing.image} alt={`${listing.title} boarding house`} className="h-64 w-full object-cover sm:h-80" />
-        ) : (
-          <div className="flex h-64 items-center justify-center bg-brand-tint text-brand sm:h-80"><House size={48} /></div>
-        )}
-        <div className="space-y-6 p-5 sm:p-8">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Boarding house details</p>
-            <h2 id="listing-details-title" className="mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">{listing.title}</h2>
-            <p className="mt-2 flex items-center gap-2 text-sm text-muted"><MapPin size={16} className="shrink-0 text-brand" />{listing.location}</p>
-            <p className="mt-4 text-2xl font-bold text-ink">{formatPrice(listing.price)} <span className="text-sm font-medium text-muted">/ month</span></p>
-            <p className="mt-1 text-sm text-muted">{listing.type}</p>
-          </div>
-
-          {listing.description && <section><h3 className="mb-2 font-semibold text-ink">About this place</h3><p className="whitespace-pre-line text-sm leading-6 text-muted">{listing.description}</p></section>}
-
-          {listing.amenities?.length ? <section><h3 className="mb-3 font-semibold text-ink">Amenities</h3><div className="flex flex-wrap gap-2">{listing.amenities.map((item) => <span key={item} className="rounded-full bg-brand-tint px-3 py-2 text-xs font-medium text-brand-dark">{item}</span>)}</div></section> : null}
-
-          {listing.wifi && <section><h3 className="mb-2 flex items-center gap-2 font-semibold text-ink"><Wifi size={17} className="text-brand" />Wi-Fi</h3><p className="text-sm text-muted">{listing.wifi}</p></section>}
-
-          {listing.rules?.length ? <section><h3 className="mb-3 font-semibold text-ink">House rules</h3><ul className="space-y-2">{listing.rules.map((rule) => <li key={rule} className="flex items-start gap-2 text-sm text-muted"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-brand" />{rule}</li>)}</ul></section> : null}
-
-          {(listing.landlord_name || phone) && <section className="rounded-2xl bg-page p-4"><h3 className="mb-3 font-semibold text-ink">Contact information</h3>{listing.landlord_name && <p className="mb-2 flex items-center gap-2 text-sm text-muted"><UserRound size={16} className="text-brand" />{listing.landlord_name}</p>}{phone && <div className="flex flex-wrap gap-2"><a href={`tel:${phoneHref}`} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-brand"><Phone size={16} />Call {phone}</a>{waNumber.length >= 10 && <a href={`https://wa.me/${waNumber}?text=${waMessage}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-brand/20 bg-surface px-4 py-3 text-sm font-semibold text-brand-dark hover:bg-brand-tint"><MessageCircle size={16} />Message on WhatsApp</a>}</div>}</section>}
-        </div>
-      </section>
+  return <div className="fixed inset-0 z-[60] overflow-y-auto bg-[#f3f4f8] text-[#293c42] sm:p-3" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="mx-auto min-h-full max-w-[1440px] px-4 pb-8 pt-4 sm:px-6 lg:px-10">
+      <header className="sticky top-2 z-20 mb-5 flex min-h-[62px] items-center justify-between gap-3 rounded-full bg-[#fcfcfd]/95 px-4 shadow-[0_8px_22px_rgba(124,138,159,.11)] backdrop-blur sm:px-6">
+        <div className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-xl bg-[#e4f2eb] text-[#258773]"><House size={20}/></span><b className="hidden text-sm sm:inline">Boarding House Finder</b></div>
+        <nav className="hidden gap-6 text-xs font-medium text-[#68777f] md:flex"><span className="font-semibold text-[#258773]">Find Rooms</span><span>Locations</span><span>Amenities</span><span>Help</span></nav>
+        <div className="flex items-center gap-1"><button onClick={share} className="rounded-full px-3 py-2 text-xs font-semibold text-[#196a5a]"><Share2 size={14} className="mr-1 inline"/>Share</button><button onClick={toggleSave} aria-pressed={saved} className="rounded-full px-3 py-2 text-xs font-semibold text-[#196a5a]"><Heart size={14} className={saved ? "mr-1 inline fill-rose-500 text-rose-500" : "mr-1 inline"}/>{saved ? "Saved" : "Save"}</button><button onClick={onClose} aria-label="Close listing details" className="flex size-9 items-center justify-center rounded-full bg-[#eef0f5]"><X size={17}/></button></div>
+      </header>
+      <div className="mb-4 flex items-center gap-2 text-[11px] text-[#68777f]"><button onClick={onClose}>All rooms</button><ChevronRight size={12}/><span>{listing.location}</span><ChevronRight size={12}/><b className="text-[#293c42]">{listing.title}</b></div>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-bold tracking-tight sm:text-[32px]">{listing.title}</h1><span className="inline-flex items-center gap-1 rounded-full bg-[#e4f2eb] px-3 py-1.5 text-[10px] font-semibold text-[#196a5a]"><ShieldCheck size={13}/>Listed on Boarding House Finder</span></div><div className="mt-2 flex flex-wrap gap-3 text-xs text-[#68777f]"><span className="inline-flex items-center gap-1"><MapPin size={13}/>{listing.location}</span><span className="inline-flex items-center gap-1"><BedSingle size={13}/>{listing.type}</span></div></div></div>
+      <div className="mb-7 grid gap-2 overflow-hidden rounded-[24px] sm:h-[300px] sm:grid-cols-[1.35fr_1fr] lg:h-[360px]">
+        <div className="relative min-h-[230px] overflow-hidden bg-[#e2e8e4]">{listing.image ? <img src={listing.image} alt={`${listing.title} room`} className="size-full object-cover"/> : <div className="flex size-full items-center justify-center text-[#258773]"><House size={54}/></div>}<span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-2 text-[10px] font-semibold"><Star size={12} className="mr-1 inline text-[#c78d49]"/>Room photos</span></div>
+        <div className="grid min-h-[190px] grid-cols-2 grid-rows-2 gap-2">{[0,1,2,3].map(i=><div key={i} className="overflow-hidden bg-gradient-to-br from-[#e7e9e6] to-[#d9e5df]">{listing.image && <img src={listing.image} alt="" className="size-full object-cover"/>}</div>)}</div>
+      </div>
+      <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_330px] xl:grid-cols-[minmax(0,1fr)_360px]">
+        <main className="min-w-0 space-y-7">
+          <section className="border-b border-[#e3e7ec] pb-5"><h2 className="text-lg font-semibold">A place to feel at home</h2><div className="mt-3 flex flex-wrap gap-2"><span className="rounded-full bg-white px-3 py-2 text-xs text-[#68777f]">{listing.type}</span><span className="rounded-full bg-white px-3 py-2 text-xs text-[#68777f]">{listing.location}</span></div></section>
+          {listing.landlord_name && <section className="flex items-center justify-between rounded-2xl bg-[#fcfcfd] p-4 shadow-sm"><div className="flex items-center gap-3"><span className="flex size-11 items-center justify-center rounded-full bg-[#e4f2eb] text-[#258773]"><UserRound size={20}/></span><div><p className="text-sm font-semibold">Hosted by {listing.landlord_name}</p><p className="mt-1 text-[11px] text-[#68777f]">Listing contact</p></div></div><span className="rounded-full bg-[#e4f2eb] px-3 py-1.5 text-[10px] font-semibold text-[#196a5a]">Host</span></section>}
+          {listing.description && <section><h2 className="mb-3 text-base font-semibold">About this room</h2><p className="whitespace-pre-line text-sm leading-7 text-[#68777f]">{listing.description}</p></section>}
+          <section><h2 className="mb-4 text-base font-semibold">The little things that make it home</h2>{amenities.length ? <div className="grid gap-3 sm:grid-cols-2">{amenities.map(a=><div key={a} className="flex items-center gap-3 rounded-xl bg-[#fcfcfd] p-3 text-sm text-[#68777f] shadow-sm"><span className="flex size-8 items-center justify-center rounded-lg bg-[#e4f2eb] text-[#258773]"><CheckCircle2 size={16}/></span>{a}</div>)}</div> : <p className="text-sm text-[#68777f]">The host has not added amenity details yet.</p>}</section>
+          {listing.wifi && <section><h2 className="mb-3 text-base font-semibold">Internet and connectivity</h2><p className="flex items-center gap-3 rounded-xl bg-[#fcfcfd] p-3 text-sm text-[#68777f] shadow-sm"><Wifi size={17} className="text-[#258773]"/>{listing.wifi}</p></section>}
+          {rules.length>0 && <section><h2 className="mb-4 text-base font-semibold">House rules</h2><div className="grid gap-3 sm:grid-cols-2">{rules.map(r=><div key={r} className="flex items-start gap-3 text-sm text-[#68777f]"><CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#258773]"/>{r}</div>)}</div></section>}
+          <section className="rounded-2xl bg-[#fcfcfd] p-4 shadow-sm"><h2 className="mb-3 text-base font-semibold">Nearby essentials</h2><p className="text-sm leading-6 text-[#68777f]">Ask the host about nearby schools, shops, and public transportation options.</p><div className="mt-3 flex flex-wrap gap-2 text-xs text-[#68777f]"><span className="rounded-full bg-[#f3f4f8] px-3 py-2"><GraduationCap size={13} className="mr-1 inline text-[#258773]"/>Schools</span><span className="rounded-full bg-[#f3f4f8] px-3 py-2"><ShoppingBasket size={13} className="mr-1 inline text-[#258773]"/>Stores</span><span className="rounded-full bg-[#f3f4f8] px-3 py-2"><Bus size={13} className="mr-1 inline text-[#258773]"/>Transport</span></div></section>
+          <section className="border-t border-[#e3e7ec] pt-5"><h2 className="text-base font-semibold">Questions about this listing?</h2><p className="mt-2 text-sm text-[#68777f]">Contact the host to confirm availability, move-in details, and anything else you need to know.</p><button onClick={onClose} className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#196a5a] shadow-raised">Back to rooms <ArrowRight size={15}/></button></section>
+        </main>
+        <aside className="lg:sticky lg:top-[88px]"><div className="rounded-[24px] bg-[#fcfcfd] p-5 shadow-[0_8px_24px_rgba(124,138,159,.12)]"><div className="flex items-baseline justify-between gap-3"><p className="text-xl font-bold">{price(listing.price)} <span className="text-xs font-medium text-[#68777f]">/ month</span></p><span className="rounded-full bg-[#e4f2eb] px-2.5 py-1 text-[10px] font-semibold text-[#196a5a]">Monthly rent</span></div><p className="mt-2 text-xs text-[#68777f]">{listing.type} · {listing.location}</p><div className="my-5 space-y-3 rounded-2xl bg-[#f3f4f8] p-4"><div className="flex items-center gap-3"><CalendarDays size={16} className="text-[#258773]"/><div><p className="text-xs font-semibold">Move-in date</p><p className="mt-1 text-[11px] text-[#68777f]">Ask host for availability</p></div></div><div className="h-px bg-[#e3e7ec]"/><div className="flex items-center gap-3"><Clock3 size={16} className="text-[#258773]"/><div><p className="text-xs font-semibold">Rental duration</p><p className="mt-1 text-[11px] text-[#68777f]">Confirm terms with host</p></div></div></div>
+          {phone ? <div className="space-y-2"><a href={`tel:${phoneHref}`} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#258773] px-4 py-3.5 text-sm font-semibold text-white"><Phone size={16}/>Call host</a>{number.length>=10 && <a href={`https://wa.me/${number}?text=${message}`} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-full border border-[#c7dfd3] bg-white px-4 py-3 text-sm font-semibold text-[#196a5a]"><MessageCircle size={16}/>Message host</a>}</div> : <p className="rounded-xl bg-[#f3f4f8] p-3 text-xs text-[#68777f]">Contact details have not been added to this listing yet.</p>}
+          <p className="mt-4 flex items-start gap-2 text-[10px] leading-5 text-[#68777f]"><Info size={13} className="mt-0.5 shrink-0 text-[#258773]"/>Confirm rent, deposit, and availability directly with the host before making any payment.</p><button onClick={share} className="mt-4 w-full text-xs font-semibold text-[#68777f]">Share listing</button>
+        </div></aside>
+      </div>
+      <footer className="mt-10 border-t border-[#e3e7ec] pt-5 text-center text-[10px] text-[#68777f]">© Boarding House Finder · Find a place to call home</footer>
     </div>
-  );
+  </div>;
 }
