@@ -45,9 +45,9 @@
   --color-avatar: #34424f;
   --color-avatar-icon: #c0ccd5;
   --color-star: #e0b56f;
-  --shadow-raised: 0 1px 3px 0 rgba(0, 0, 0, 0.16);
-  --shadow-pressed: inset 0 1px 2px 0 rgba(0, 0, 0, 0.18);
-  --shadow-brand: 0 1px 3px 0 rgba(0, 0, 0, 0.16);
+  --shadow-raised: none;
+  --shadow-pressed: none;
+  --shadow-brand: none;
 }
 
 @layer base {
