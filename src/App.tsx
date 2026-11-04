@@ -3,8 +3,14 @@ import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Listings from "./components/Listings";
 import Footer from "./components/Footer";
+import OwnerDashboard from "./components/OwnerDashboard";
 
 export default function App() {
+  const isAdminRoute = new URLSearchParams(window.location.search).get("admin") === "1";
+  return isAdminRoute ? <OwnerDashboard /> : <HomePage />;
+}
+
+function HomePage() {
   const [listingRefreshKey, setListingRefreshKey] = useState(0);
   const [submissionNotice, setSubmissionNotice] = useState("");
 
