@@ -8,15 +8,48 @@ import MyListings from "./components/MyListings";
 import Messaging from "./components/Messaging";
 import type { SearchCriteria } from "./components/SearchBar";
 
+type Theme = "light" | "dark";
+
 export default function App() {
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      return localStorage.getItem("bhf-theme") === "dark" ? "dark" : "light";
+    } catch {
+      return "light";
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("bhf-theme", theme);
+    } catch {
+      // Theme still applies for this session when storage is unavailable.
+    }
+  }, [theme]);
+
   const params = new URLSearchParams(window.location.search);
   const isAdminRoute = params.get("admin") === "1";
   const isMyListingsRoute = params.get("my-listings") === "1";
   const isMessagesRoute = params.get("messages") === "1";
-  if (isAdminRoute) return <OwnerDashboard />;
-  if (isMyListingsRoute) return <MyListings />;
-  if (isMessagesRoute) return <Messaging />;
-  return <HomePage />;
+
+  let page = isAdminRoute ? <OwnerDashboard /> : isMyListingsRoute ? <MyListings /> : isMessagesRoute ? <Messaging /> : <HomePage />;
+
+  return (
+    <>
+      {page}
+      <button
+        type="button"
+        className="theme-toggle"
+        onClick={() => setTheme((current) => current === "light" ? "dark" : "light")}
+        aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+        title={theme === "light" ? "Dark theme" : "Light theme"}
+      >
+        <span aria-hidden="true">{theme === "light" ? "☾" : "☀"}</span>
+        <span>{theme === "light" ? "Dark" : "Light"} theme</span>
+      </button>
+    </>
+  );
 }
 
 function HomePage() {

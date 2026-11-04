@@ -29,6 +29,33 @@
     3px 5px 10px 0 rgba(33, 95, 71, 0.15);
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-page: #111820;
+  --color-surface: #1b2631;
+  --color-card: #202d39;
+  --color-ink: #e8eef2;
+  --color-muted: #a4b2bd;
+  --color-line: #344451;
+  --color-brand: #65c3a7;
+  --color-brand-dark: #9be0ca;
+  --color-brand-tint: #203b35;
+  --color-brand-border: #355e52;
+  --color-pressed: #263440;
+  --color-avatar: #34424f;
+  --color-avatar-icon: #c0ccd5;
+  --color-star: #e0b56f;
+  --shadow-raised: -2px -3px 6px 0 rgba(0, 0, 0, 0.15) inset,
+    2px 2px 3px 0 rgba(255, 255, 255, 0.025) inset,
+    -5px -5px 14px 0 rgba(0, 0, 0, 0.22),
+    6px 8px 22px 0 rgba(0, 0, 0, 0.28);
+  --shadow-pressed: -2px -2px 4px 0 #111820 inset,
+    2px 3px 6px 0 rgba(0, 0, 0, 0.2) inset;
+  --shadow-brand: -2px -3px 5px 0 rgba(0, 0, 0, 0.2) inset,
+    2px 2px 3px 0 rgba(255, 255, 255, 0.04) inset,
+    3px 5px 10px 0 rgba(0, 0, 0, 0.2);
+}
+
 @layer base {
   body {
     margin: 0;
@@ -38,3 +65,24 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+.theme-toggle {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: 9999px;
+  padding: 0.7rem 1rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-raised);
+  font: 600 0.875rem/1.2 var(--font-sans);
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+.theme-toggle:hover { transform: translateY(-2px); }
+.theme-toggle span:first-child { font-size: 1.1rem; }
