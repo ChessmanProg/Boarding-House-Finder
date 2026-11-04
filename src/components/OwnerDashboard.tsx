@@ -330,14 +330,14 @@ export default function OwnerDashboard() {
                 className="mt-1.5 w-full rounded-2xl bg-page px-4 py-3 text-sm text-ink shadow-pressed outline-none focus:ring-2 focus:ring-brand/40"
               />
             </label>
-            <button type="submit" disabled={signingIn} className={`${buttonBase} w-full bg-brand py-3 text-white shadow-brand hover:brightness-105`}>
+            <button type="submit" disabled={signingIn} className={`${buttonBase} w-full bg-brand py-3 text-page shadow-brand hover:brightness-105`}>
               {signingIn ? "Signing in…" : "Log in"}
             </button>
           </form>
           <button
             type="button"
             onClick={() => void signInWithGoogle()}
-            className={`${buttonBase} mt-3 w-full border border-slate-200 bg-white text-slate-700 shadow-raised hover:bg-slate-50`}
+            className={`${buttonBase} mt-3 w-full border border-line bg-surface text-ink shadow-raised hover:bg-page`}
           >
             <svg aria-hidden="true" viewBox="0 0 48 48" className="size-5">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.45 13.72 17.74 9.5 24 9.5Z" />
@@ -408,7 +408,7 @@ Only the authorized owner account can approve, reject, or remove listings.
                   key={filter}
                   type="button"
                   onClick={() => setActiveFilter(filter)}
-                  className={`rounded-full px-3 py-2 text-xs font-semibold capitalize transition ${activeFilter === filter ? "bg-brand text-white shadow-brand" : "bg-page text-muted shadow-pressed hover:text-ink"}`}
+                  className={`rounded-full px-3 py-2 text-xs font-semibold capitalize transition ${activeFilter === filter ? "bg-brand text-page shadow-brand" : "bg-page text-muted shadow-pressed hover:text-ink"}`}
                 >
                   {filter === "all" ? "All" : filter}
                 </button>
@@ -466,7 +466,7 @@ Only the authorized owner account can approve, reject, or remove listings.
                           type="button"
                           disabled={workingId === listing.id}
                           onClick={() => void changeStatus(listing, "approved")}
-                          className={`${buttonBase} bg-brand text-white shadow-brand`}
+                          className={`${buttonBase} bg-brand text-page shadow-brand`}
                         >
                           <Check size={15} />
                           Approve & publish
