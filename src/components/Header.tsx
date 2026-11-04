@@ -42,12 +42,6 @@ export default function Header({ onListingCreated }: HeaderProps) {
       setAccessNotice("Owner account — approval is not required.");
       return;
     }
-    if ((user.email ?? "").toLowerCase() === OWNER_EMAIL) {
-      setAccessStatus("approved");
-      setIsListingModalOpen(true);
-      return;
-    }
-
     const { data, error } = await supabase
       .from("user_access")
       .select("status")
@@ -121,6 +115,13 @@ export default function Header({ onListingCreated }: HeaderProps) {
     }
 
     setCurrentUser(user);
+    if ((user.email ?? "").toLowerCase() === OWNER_EMAIL) {
+      setAccessStatus("approved");
+      setAccessNotice("Owner account — approval is not required.");
+      setIsListingModalOpen(true);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("user_access")
       .select("status")
