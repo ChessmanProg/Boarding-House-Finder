@@ -2,6 +2,7 @@ import { useState } from "react";\nimport Messaging from "./Messaging";
 import { X, MapPin, Wifi, UserRound, Phone, CheckCircle2, House, MessageCircle, Share2, Heart, Star, ShieldCheck, BedSingle, CalendarDays, Clock3, ArrowRight, Info, GraduationCap, ShoppingBasket, Bus, ChevronRight } from "lucide-react";
 
 export type ListingDetails = {
+  id: number; owner_id?: string | null;
   title: string; location: string; price: number | string; type: string; image: string | null; images?: string[] | null;
   description: string | null; landlord_name: string | null; contact_phone: string | null;
   amenities: string[] | null; wifi: string | null; rules: string[] | null;
