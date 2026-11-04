@@ -57,6 +57,7 @@ export default function OwnerDashboard() {
   const [session, setSession] = useState<Session | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [signingIn, setSigningIn] = useState(false);
+  const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPassword, setOwnerPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -147,7 +148,7 @@ export default function OwnerDashboard() {
     setError("");
     setMessage("");
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: OWNER_EMAIL, password: ownerPassword });
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: ownerEmail.trim(), password: ownerPassword });
 
     if (signInError) setError(signInError.message);
     setSigningIn(false);
@@ -308,6 +309,17 @@ export default function OwnerDashboard() {
           )}
 
           <form onSubmit={signInOwner} className="mt-6 space-y-3">
+            <label className="block text-sm font-semibold text-ink">Email
+              <input
+                type="email"
+                autoComplete="username"
+                required
+                value={ownerEmail}
+                onChange={(event) => setOwnerEmail(event.target.value)}
+                placeholder="Enter your owner email"
+                className="mt-1.5 w-full rounded-2xl bg-page px-4 py-3 text-sm text-ink shadow-pressed outline-none focus:ring-2 focus:ring-brand/40"
+              />
+            </label>
             <label className="block text-sm font-semibold text-ink">Password
               <input
                 type="password"
