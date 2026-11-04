@@ -5,6 +5,7 @@ import UserAuthModal from "./UserAuthModal";
 import { supabase } from "../lib/supabase";
 
 const links = ["Locations", "Amenities", "Help"];
+const OWNER_EMAIL = "tneilandre20@gmail.com";
 
 type HeaderProps = { onListingCreated: () => void };
 type AccessStatus = "pending" | "approved" | "rejected" | null;
@@ -34,6 +35,19 @@ export default function Header({ onListingCreated }: HeaderProps) {
       setAccessStatus(null);
       return;
     }
+    // The designated owner account is trusted by the owner dashboard and
+    // should not be blocked by the regular member approval queue.
+    if ((user.email ?? "").toLowerCase() === OWNER_EMAIL) {
+      setAccessStatus("approved");
+      setAccessNotice("Owner account — approval is not required.");
+      return;
+    }
+    if ((user.email ?? "").toLowerCase() === OWNER_EMAIL) {
+      setAccessStatus("approved");
+      setIsListingModalOpen(true);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("user_access")
       .select("status")
