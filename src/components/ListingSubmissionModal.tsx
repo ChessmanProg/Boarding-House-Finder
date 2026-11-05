@@ -3,8 +3,8 @@ import { X, ImagePlus, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 type Props = { onClose: () => void; onCreated: () => void };
-type FormValues = { title:string; location:string; price:string; type:string; description:string; landlord_name:string; contact_phone:string; image:string; amenities:string; wifi:string; rules:string };
-const initialValues:FormValues = { title:"",location:"",price:"",type:"Single Room",description:"",landlord_name:"",contact_phone:"",image:"",amenities:"",wifi:"",rules:"" };
+type FormValues = { title:string; location:string; price:string; type:string; description:string; landlord_name:string; contact_phone:string; image:string; amenities:string; wifi:string; rules:string; latitude:string; longitude:string };
+const initialValues:FormValues = { title:"",location:"",price:"",type:"Single Room",description:"",landlord_name:"",contact_phone:"",image:"",amenities:"",wifi:"",rules:"",latitude:"",longitude:"" };
 const fieldClass = "mt-1.5 w-full rounded-2xl bg-page px-4 py-3 text-sm text-ink shadow-pressed outline-none transition placeholder:text-muted/70 focus:ring-2 focus:ring-brand/40";
 function toArray(value:string) { return value.split(",").map(x=>x.trim()).filter(Boolean); }
 
@@ -44,7 +44,7 @@ export default function ListingSubmissionModal({onClose,onCreated}:Props) {
       const {error:insertError}=await supabase.from("listings").insert({
         owner_id:user.id,title:form.title.trim(),location:form.location.trim(),price:amount,type:form.type,
         description:form.description.trim()||null,landlord_name:form.landlord_name.trim()||null,
-        contact_phone:form.contact_phone.trim()||null,image:imageUrls[0]||null,images:imageUrls,
+        contact_phone:form.contact_phone.trim()||null,image:imageUrls[0]||null,images:imageUrls,\n        latitude:form.latitude.trim()?Number(form.latitude):null,longitude:form.longitude.trim()?Number(form.longitude):null,
         amenities:toArray(form.amenities),wifi:form.wifi.trim()||null,rules:toArray(form.rules),
       });
       if(insertError) { setError(insertError.message); return; }
@@ -65,7 +65,7 @@ export default function ListingSubmissionModal({onClose,onCreated}:Props) {
           <label className="block text-sm font-semibold text-ink">Landlord / contact person<input className={fieldClass} value={form.landlord_name} onChange={e=>updateField("landlord_name",e.target.value)} placeholder="Full name" maxLength={100}/></label>
           <label className="block text-sm font-semibold text-ink">Contact number<input className={fieldClass} type="tel" value={form.contact_phone} onChange={e=>updateField("contact_phone",e.target.value)} placeholder="09XX XXX XXXX" maxLength={30}/></label>
         </div>
-        <label className="block text-sm font-semibold text-ink">Description<textarea className={fieldClass} rows={3} value={form.description} onChange={e=>updateField("description",e.target.value)} placeholder="Describe the room, nearby landmarks, and what makes it a good place to stay." maxLength={1500}/></label>
+        <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-semibold text-ink">Latitude (optional)<input className={fieldClass} type="number" step="any" min="-90" max="90" value={form.latitude} onChange={e=>updateField("latitude",e.target.value)} placeholder="e.g. 9.3068"/></label><label className="block text-sm font-semibold text-ink">Longitude (optional)<input className={fieldClass} type="number" step="any" min="-180" max="180" value={form.longitude} onChange={e=>updateField("longitude",e.target.value)} placeholder="e.g. 123.3054"/></label></div><p className="text-xs text-muted">Coordinates place your listing on the map. Add them only if you know the exact location.</p>\n        <label className="block text-sm font-semibold text-ink">Description<textarea className={fieldClass} rows={3} value={form.description} onChange={e=>updateField("description",e.target.value)} placeholder="Describe the room, nearby landmarks, and what makes it a good place to stay." maxLength={1500}/></label>
         <div className="rounded-2xl bg-page p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink"><ImagePlus size={17} className="text-brand"/>Listing photos <span className="text-xs font-normal text-muted">(up to 8)</span></div>
           <p className="mt-1 text-xs text-muted">Upload bedroom, bathroom, kitchen, and exterior photos. JPG, PNG, or WebP; max 5 MB each.</p>
