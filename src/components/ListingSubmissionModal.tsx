@@ -12,6 +12,7 @@ export default function ListingSubmissionModal({onClose,onCreated}:Props) {
   const [form,setForm] = useState<FormValues>(initialValues);
   const [photos,setPhotos] = useState<File[]>([]);
   const [saving,setSaving] = useState(false);
+  const [locating,setLocating] = useState(false);
   const [error,setError] = useState("");
   function updateField(field:keyof FormValues,value:string) { setForm(current=>({...current,[field]:value})); }
   function choosePhotos(files:FileList|null) {
@@ -21,6 +22,19 @@ export default function ListingSubmissionModal({onClose,onCreated}:Props) {
     if (picked.some(file=>file.size>5*1024*1024)) { setError("Each photo must be 5 MB or smaller."); return; }
     setError("");
     setPhotos(current=>[...current,...picked].slice(0,8));
+  }
+  async function locateBoardingHouse() {
+    const query = form.location.trim();
+    if (!query) { setError("Enter the barangay, city, or street address first so we can find it on the map."); return; }
+    setLocating(true); setError("");
+    try {
+      const response = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=" + encodeURIComponent(query), { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error("The map search is temporarily unavailable. Please try again.");
+      const results = await response.json() as Array<{lat:string;lon:string;display_name:string}>;
+      if (!results.length) { setError("We couldn't find that address. Try adding the barangay and city."); return; }
+      setForm(current => ({...current, latitude: results[0].lat, longitude: results[0].lon}));
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not find this location."); }
+    finally { setLocating(false); }
   }
   async function handleSubmit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError("");
@@ -66,7 +80,7 @@ export default function ListingSubmissionModal({onClose,onCreated}:Props) {
           <label className="block text-sm font-semibold text-ink">Landlord / contact person<input className={fieldClass} value={form.landlord_name} onChange={e=>updateField("landlord_name",e.target.value)} placeholder="Full name" maxLength={100}/></label>
           <label className="block text-sm font-semibold text-ink">Contact number<input className={fieldClass} type="tel" value={form.contact_phone} onChange={e=>updateField("contact_phone",e.target.value)} placeholder="09XX XXX XXXX" maxLength={30}/></label>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-semibold text-ink">Latitude (optional)<input className={fieldClass} type="number" step="any" min="-90" max="90" value={form.latitude} onChange={e=>updateField("latitude",e.target.value)} placeholder="e.g. 9.3068"/></label><label className="block text-sm font-semibold text-ink">Longitude (optional)<input className={fieldClass} type="number" step="any" min="-180" max="180" value={form.longitude} onChange={e=>updateField("longitude",e.target.value)} placeholder="e.g. 123.3054"/></label></div><p className="text-xs text-muted">Coordinates place your listing on the map. Add them only if you know the exact location.</p>
+        <div className="rounded-2xl bg-page p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-semibold text-ink">Boarding house location on map</p><p className="mt-1 text-xs text-muted">Search your address to locate it. Coordinates are saved automatically.</p></div><button type="button" onClick={()=>void locateBoardingHouse()} disabled={locating} className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{locating?"Finding location…":"Navigate on map"}</button></div>{form.latitude && form.longitude ? <><div className="mt-3 overflow-hidden rounded-xl border border-line"><iframe title="Selected boarding house location" className="h-64 w-full" loading="lazy" src={"https://www.openstreetmap.org/export/embed.html?bbox="+(Number(form.longitude)-0.006)+"%2C"+(Number(form.latitude)-0.004)+"%2C"+(Number(form.longitude)+0.006)+"%2C"+(Number(form.latitude)+0.004)+"&layer=mapnik&marker="+form.latitude+"%2C"+form.longitude}/></div><p className="mt-2 text-xs text-muted">Location found. Refine the address above and search again if needed.</p></> : <div className="mt-3 flex h-28 items-center justify-center rounded-xl border border-dashed border-line text-center text-sm text-muted">Your selected location will appear here.</div>}</div>
         <label className="block text-sm font-semibold text-ink">Description<textarea className={fieldClass} rows={3} value={form.description} onChange={e=>updateField("description",e.target.value)} placeholder="Describe the room, nearby landmarks, and what makes it a good place to stay." maxLength={1500}/></label>
         <div className="rounded-2xl bg-page p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink"><ImagePlus size={17} className="text-brand"/>Listing photos <span className="text-xs font-normal text-muted">(up to 8)</span></div>
