@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { X, ImagePlus, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -8,11 +8,38 @@ const initialValues:FormValues = { title:"",location:"",price:"",type:"Single Ro
 const fieldClass = "mt-1.5 w-full rounded-2xl bg-page px-4 py-3 text-sm text-ink shadow-pressed outline-none transition placeholder:text-muted/70 focus:ring-2 focus:ring-brand/40";
 function toArray(value:string) { return value.split(",").map(x=>x.trim()).filter(Boolean); }
 
+declare global { interface Window { L?: any } }
+let leafletLoader: Promise<any> | null = null;
+function loadLeaflet(): Promise<any> {
+  if (window.L) return Promise.resolve(window.L);
+  if (!leafletLoader) {
+    leafletLoader = new Promise((resolve, reject) => {
+      if (!document.querySelector('link[data-leaflet-css="true"]')) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        link.dataset.leafletCss = "true";
+        document.head.appendChild(link);
+      }
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.onload = () => window.L ? resolve(window.L) : reject(new Error("Map library did not initialize."));
+      script.onerror = () => reject(new Error("The interactive map could not load. Please try again."));
+      document.head.appendChild(script);
+    });
+  }
+  return leafletLoader;
+}
+
 export default function ListingSubmissionModal({onClose,onCreated}:Props) {
   const [form,setForm] = useState<FormValues>(initialValues);
   const [photos,setPhotos] = useState<File[]>([]);
   const [saving,setSaving] = useState(false);
   const [locating,setLocating] = useState(false);
+  const [manualMapOpen,setManualMapOpen] = useState(false);
+  const manualMapRef = useRef<HTMLDivElement|null>(null);
+  const leafletMapRef = useRef<any>(null);
+  const leafletMarkerRef = useRef<any>(null);
   const [error,setError] = useState("");
   function updateField(field:keyof FormValues,value:string) { setForm(current=>({...current,[field]:value})); }
   function choosePhotos(files:FileList|null) {
@@ -36,6 +63,40 @@ export default function ListingSubmissionModal({onClose,onCreated}:Props) {
     } catch (e) { setError(e instanceof Error ? e.message : "Could not find this location."); }
     finally { setLocating(false); }
   }
+  useEffect(() => {
+    if (!manualMapOpen || !manualMapRef.current) return;
+    let cancelled = false;
+    void loadLeaflet().then((L) => {
+      if (cancelled || !manualMapRef.current) return;
+      if (leafletMapRef.current) { leafletMapRef.current.invalidateSize(); return; }
+      const hasCoordinates = Boolean(form.latitude.trim() && form.longitude.trim());
+      const center: [number, number] = hasCoordinates ? [Number(form.latitude), Number(form.longitude)] : [12.8797, 121.774];
+      const map = L.map(manualMapRef.current).setView(center, hasCoordinates ? 16 : 6);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(map);
+      leafletMapRef.current = map;
+      if (hasCoordinates) leafletMarkerRef.current = L.marker(center).addTo(map);
+      map.on("click", (event: any) => {
+        updateField("latitude", String(event.latlng.lat));
+        updateField("longitude", String(event.latlng.lng));
+      });
+      map.invalidateSize();
+    }).catch((mapError) => {
+      if (!cancelled) setError(mapError instanceof Error ? mapError.message : "Could not load the interactive map.");
+    });
+    return () => { cancelled = true; };
+  }, [manualMapOpen]);
+
+  useEffect(() => {
+    const map = leafletMapRef.current, L = window.L;
+    if (!map || !L || !form.latitude.trim() || !form.longitude.trim()) return;
+    const point: [number, number] = [Number(form.latitude), Number(form.longitude)];
+    if (leafletMarkerRef.current) leafletMarkerRef.current.setLatLng(point);
+    else leafletMarkerRef.current = L.marker(point).addTo(map);
+  }, [form.latitude, form.longitude]);
+
   async function handleSubmit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault(); setError("");
     if (!supabase) { setError("Supabase is not configured. Please check your environment variables."); return; }
@@ -80,7 +141,21 @@ export default function ListingSubmissionModal({onClose,onCreated}:Props) {
           <label className="block text-sm font-semibold text-ink">Landlord / contact person<input className={fieldClass} value={form.landlord_name} onChange={e=>updateField("landlord_name",e.target.value)} placeholder="Full name" maxLength={100}/></label>
           <label className="block text-sm font-semibold text-ink">Contact number<input className={fieldClass} type="tel" value={form.contact_phone} onChange={e=>updateField("contact_phone",e.target.value)} placeholder="09XX XXX XXXX" maxLength={30}/></label>
         </div>
-        <div className="rounded-2xl bg-page p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-semibold text-ink">Boarding house location on map</p><p className="mt-1 text-xs text-muted">Search your address to locate it. Coordinates are saved automatically.</p></div><button type="button" onClick={()=>void locateBoardingHouse()} disabled={locating} className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{locating?"Finding location…":"Navigate on map"}</button></div>{form.latitude && form.longitude ? <><div className="mt-3 overflow-hidden rounded-xl border border-line"><iframe title="Selected boarding house location" className="h-64 w-full" loading="lazy" src={"https://www.openstreetmap.org/export/embed.html?bbox="+(Number(form.longitude)-0.006)+"%2C"+(Number(form.latitude)-0.004)+"%2C"+(Number(form.longitude)+0.006)+"%2C"+(Number(form.latitude)+0.004)+"&layer=mapnik&marker="+form.latitude+"%2C"+form.longitude}/></div><p className="mt-2 text-xs text-muted">Location found. Refine the address above and search again if needed.</p></> : <div className="mt-3 flex h-28 items-center justify-center rounded-xl border border-dashed border-line text-center text-sm text-muted">Your selected location will appear here.</div>}</div>
+        <div className="rounded-2xl bg-page p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><p className="text-sm font-semibold text-ink">Boarding house location on map</p><p className="mt-1 text-xs text-muted">Search the address, or pick the exact spot manually.</p></div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={()=>void locateBoardingHouse()} disabled={locating} className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{locating?"Finding location…":"Navigate on map"}</button>
+              <button type="button" onClick={()=>setManualMapOpen(open=>!open)} className="rounded-xl bg-surface px-4 py-2.5 text-sm font-semibold text-ink shadow-pressed">{manualMapOpen?"Hide manual map":"Choose manually"}</button>
+            </div>
+          </div>
+          {manualMapOpen && <div className="mt-3">
+            <p className="mb-2 text-xs text-muted">Move and zoom the map, then click the exact boarding-house location to place its pin.</p>
+            <div ref={manualMapRef} className="h-72 w-full overflow-hidden rounded-xl border border-line" />
+            {form.latitude && form.longitude && <p className="mt-2 break-all text-xs text-muted">Selected coordinates: {Number(form.latitude).toFixed(6)}, {Number(form.longitude).toFixed(6)}</p>}
+          </div>}
+          {form.latitude && form.longitude ? <><div className="mt-3 overflow-hidden rounded-xl border border-line"><iframe title="Selected boarding house location" className="h-64 w-full" loading="lazy" src={"https://www.openstreetmap.org/export/embed.html?bbox="+(Number(form.longitude)-0.006)+"%2C"+(Number(form.latitude)-0.004)+"%2C"+(Number(form.longitude)+0.006)+"%2C"+(Number(form.latitude)+0.004)+"&layer=mapnik&marker="+form.latitude+"%2C"+form.longitude}/></div><p className="mt-2 text-xs text-muted">Pin selected. You can refine it by clicking the manual map above.</p></> : <div className="mt-3 flex h-28 items-center justify-center rounded-xl border border-dashed border-line text-center text-sm text-muted">Your selected location will appear here.</div>}
+        </div>
         <label className="block text-sm font-semibold text-ink">Description<textarea className={fieldClass} rows={3} value={form.description} onChange={e=>updateField("description",e.target.value)} placeholder="Describe the room, nearby landmarks, and what makes it a good place to stay." maxLength={1500}/></label>
         <div className="rounded-2xl bg-page p-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink"><ImagePlus size={17} className="text-brand"/>Listing photos <span className="text-xs font-normal text-muted">(up to 8)</span></div>
