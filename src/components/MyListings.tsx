@@ -6,7 +6,7 @@ type Listing = {
   id: string | number; title: string; location: string; price: number; type: string;
   description: string | null; landlord_name: string | null; contact_phone: string | null;
   image: string | null; images: string[] | null; amenities: string[] | null; wifi: string | null;
-  rules: string[] | null; status: string; created_at?: string;
+  rules: string[] | null; latitude: number | null; longitude: number | null; status: string; created_at?: string;
 };
 type EditValues = { title:string; location:string; price:string; type:string; description:string; landlord_name:string; contact_phone:string; amenities:string; wifi:string; rules:string; latitude:string; longitude:string };
 const fields = "title,location,price,type,description,landlord_name,contact_phone,amenities,wifi,rules,latitude,longitude";
