@@ -47,7 +47,8 @@ export default function MyListings() {
       description:values.description.trim()||null,landlord_name:values.landlord_name.trim()||null,
       contact_phone:values.contact_phone.trim()||null,
       amenities:values.amenities.split(",").map(v=>v.trim()).filter(Boolean),
-      wifi:values.wifi.trim()||null,rules:values.rules.split(",").map(v=>v.trim()).filter(Boolean),\n      latitude:values.latitude.trim()?Number(values.latitude):null,longitude:values.longitude.trim()?Number(values.longitude):null,
+      wifi:values.wifi.trim()||null,rules:values.rules.split(",").map(v=>v.trim()).filter(Boolean),
+      latitude:values.latitude.trim()?Number(values.latitude):null,longitude:values.longitude.trim()?Number(values.longitude):null,
     }).eq("id",editing.id);
     if (error) setError(error.message);
     else { setEditing(null); setValues(null); await load(); }
