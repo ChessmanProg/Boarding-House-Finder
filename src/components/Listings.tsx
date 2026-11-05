@@ -33,7 +33,7 @@ export default function Listings({searchCriteria}:Props) {
   const [wifiOnly,setWifiOnly]=useState(false);
   const [favoritesOnly,setFavoritesOnly]=useState(false);
   const [favoriteIds,setFavoriteIds]=useState<string[]>(()=>readFavorites());
-  const [viewMode,setViewMode]=useState<"grid"|"map">("grid");
+  const [viewMode,setViewMode]=useState<"grid"|"map">("map");
   const [mapListingId,setMapListingId]=useState<number|null>(null);
   useEffect(()=>{const sync=()=>setFavoriteIds(readFavorites());window.addEventListener("boarding-house-favorites-changed",sync);window.addEventListener("storage",sync);return()=>{window.removeEventListener("boarding-house-favorites-changed",sync);window.removeEventListener("storage",sync);};},[]);
   async function loadListings(){
