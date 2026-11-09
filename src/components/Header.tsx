@@ -18,6 +18,20 @@ export default function Header({ onListingCreated }: HeaderProps) {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const digitalTime = new Intl.DateTimeFormat("en-PH", {
+    timeZone: "Asia/Manila",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(currentTime);
   const avatarInput = useRef<HTMLInputElement>(null);
   const customAvatar = currentUser?.user_metadata?.custom_avatar_url as string | undefined;
   const providerAvatar = (currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture) as string | undefined;
@@ -166,6 +180,11 @@ export default function Header({ onListingCreated }: HeaderProps) {
             </a>
             {links.map((link) => <a key={link} href="#listings" className="text-sm font-medium text-muted">{link}</a>)}
           </nav>
+
+          <div className="hidden flex-col items-end leading-tight sm:flex" aria-label={`Dumaguete local time ${digitalTime}`}>
+            <span className="font-mono text-sm font-semibold tabular-nums text-ink">{digitalTime}</span>
+            <span className="text-[10px] font-medium tracking-wide text-muted">DUMAGUETE · PHT</span>
+          </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
             <button type="button" onClick={startListing} className="flex h-[50px] items-center justify-center rounded-3xl bg-surface px-4 text-xs font-semibold text-brand-dark shadow-raised transition hover:-translate-y-0.5 hover:shadow-brand sm:px-[22px] sm:text-sm">
